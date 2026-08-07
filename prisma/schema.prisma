@@ -1,0 +1,351 @@
+generator client {
+  provider     = "prisma-client"
+  output       = "../generated/prisma"
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum RoleCode {
+  ADMIN
+  OPERATOR
+  VIEWER
+  AUDITOR
+}
+
+model Role {
+  id          String   @id @default(uuid())
+  code        RoleCode @unique
+  name        String
+  description String?
+  level       Int
+  active      Boolean  @default(true)
+
+  users User[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([level])
+  @@map("roles")
+}
+
+model User {
+  id           String    @id @default(uuid())
+  roleId       String    @map("role_id")
+  name         String
+  username     String    @unique
+  email        String    @unique
+  passwordHash String    @map("password_hash")
+  active       Boolean   @default(true)
+  firstLogin   Boolean   @default(true) @map("first_login")
+  lastLoginAt  DateTime? @map("last_login_at")
+
+  role          Role           @relation(fields: [roleId], references: [id], onDelete: Restrict)
+  refreshTokens RefreshToken[]
+  auditLogs     AuditLog[]
+  trustedCas    TrustedCa[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([roleId])
+  @@index([active])
+  @@map("users")
+}
+
+model RefreshToken {
+  id        String    @id @default(uuid())
+  userId    String    @map("user_id")
+  tokenHash String    @map("token_hash")
+  expiresAt DateTime  @map("expires_at")
+  revokedAt DateTime? @map("revoked_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@index([revokedAt])
+  @@map("refresh_tokens")
+}
+
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+  ACTIVATE
+  DEACTIVATE
+  CHANGE_ROLE
+  RESET_PASSWORD
+  CHANGE_PASSWORD_REQUIREMENT
+  LOGIN
+  LOGOUT
+  REFRESH_TOKEN
+  REVOKE
+  REGENERATE
+}
+
+enum AuditEntity {
+  USER
+  ROLE
+  CLIENT
+  API_KEY
+  ALLOWED_IP
+  GATEWAY_ROUTE
+  ROUTE_HEADER
+  TRUSTED_CA
+  SYSTEM_SETTING
+}
+
+model AuditLog {
+  id            String      @id @default(uuid())
+  userId        String?     @map("user_id")
+  action        AuditAction
+  entity        AuditEntity
+  entityId      String?     @map("entity_id")
+  previousValue Json?       @map("previous_value")
+  newValue      Json?       @map("new_value")
+  sourceIp      String?     @map("source_ip")
+  requestId     String?     @map("request_id")
+  description   String?
+  createdAt     DateTime    @default(now()) @map("created_at")
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([entity])
+  @@index([entityId])
+  @@index([action])
+  @@index([requestId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+model Client {
+  id           String  @id @default(uuid())
+  name         String
+  code         String  @unique
+  description  String?
+  contactName  String? @map("contact_name")
+  contactEmail String? @map("contact_email")
+  active       Boolean @default(true)
+
+  apiKeys       ApiKey[]
+  allowedIps    AllowedIp[]
+  gatewayRoutes GatewayRoute[]
+  requestLogs   RequestLog[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([active])
+  @@index([name])
+  @@map("clients")
+}
+
+model ApiKey {
+  id         String    @id @default(uuid())
+  clientId   String    @map("client_id")
+  name       String
+  prefix     String    @unique
+  keyHash    String    @unique @map("key_hash")
+  active     Boolean   @default(true)
+  expiresAt  DateTime? @map("expires_at")
+  lastUsedAt DateTime? @map("last_used_at")
+  revokedAt  DateTime? @map("revoked_at")
+
+  client      Client       @relation(fields: [clientId], references: [id], onDelete: Restrict)
+  requestLogs RequestLog[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([clientId])
+  @@index([active])
+  @@index([expiresAt])
+  @@index([revokedAt])
+  @@index([createdAt])
+  @@map("api_keys")
+}
+
+enum AllowedIpType {
+  IPV4
+  IPV6
+  CIDR_IPV4
+  CIDR_IPV6
+}
+
+model AllowedIp {
+  id          String        @id @default(uuid())
+  clientId    String        @map("client_id")
+  address     String
+  type        AllowedIpType
+  description String?
+  active      Boolean       @default(true)
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
+
+  client Client @relation(fields: [clientId], references: [id], onDelete: Restrict)
+
+  @@unique([clientId, address])
+  @@index([clientId])
+  @@index([type])
+  @@index([active])
+  @@index([createdAt])
+  @@map("allowed_ips")
+}
+
+enum GatewayHttpMethod {
+  GET
+  POST
+  PUT
+  PATCH
+  DELETE
+}
+
+model GatewayRoute {
+  id             String            @id @default(uuid())
+  clientId       String            @map("client_id")
+  name           String
+  slug           String            @unique
+  description    String?
+  destinationUrl String            @map("destination_url")
+  method         GatewayHttpMethod
+  timeoutMs      Int               @default(30000) @map("timeout_ms")
+  retryCount     Int               @default(0) @map("retry_count")
+  active         Boolean           @default(true)
+  createdAt      DateTime          @default(now()) @map("created_at")
+  updatedAt      DateTime          @updatedAt @map("updated_at")
+
+  client      Client        @relation(fields: [clientId], references: [id], onDelete: Restrict)
+  headers     RouteHeader[]
+  requestLogs RequestLog[]
+
+  @@index([clientId])
+  @@index([method])
+  @@index([active])
+  @@index([createdAt])
+  @@map("gateway_routes")
+}
+
+model RouteHeader {
+  id             String   @id @default(uuid())
+  gatewayRouteId String   @map("gateway_route_id")
+  name           String
+  valueEncrypted String   @map("value_encrypted")
+  sensitive      Boolean  @default(false)
+  active         Boolean  @default(true)
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  gatewayRoute GatewayRoute @relation(fields: [gatewayRouteId], references: [id], onDelete: Restrict)
+
+  @@unique([gatewayRouteId, name])
+  @@index([gatewayRouteId])
+  @@index([active])
+  @@index([sensitive])
+  @@index([createdAt])
+  @@map("route_headers")
+}
+
+enum RequestLogResult {
+  SUCCESS
+  ERROR
+}
+
+enum RequestOrigin {
+  PUBLIC
+  INTERNAL
+}
+
+model RequestLog {
+  id                 String           @id @default(uuid())
+  requestId          String           @unique @map("request_id")
+  attemptedAt        DateTime         @map("attempted_at")
+  requestOrigin      RequestOrigin?   @map("request_origin")
+  sourceHost         String?          @map("source_host")
+  clientId           String?          @map("client_id")
+  apiKeyId           String?          @map("api_key_id")
+  gatewayRouteId     String?          @map("gateway_route_id")
+  sourceIp           String           @map("source_ip")
+  method             String
+  publicPath         String           @map("public_path")
+  publicEndpoint     String?          @map("public_endpoint")
+  destinationHost    String?          @map("destination_host")
+  destinationUrl     String?          @map("destination_url")
+  destinationIp      String?          @map("destination_ip")
+  statusCode         Int              @map("status_code")
+  upstreamStatusCode Int?             @map("upstream_status_code")
+  durationMs         Int              @map("duration_ms")
+  attempts           Int              @default(1)
+  result             RequestLogResult
+  errorCode          String?          @map("error_code")
+  errorMessage       String?          @map("error_message")
+  requestHeaders     Json?            @map("request_headers")
+  requestQuery       Json?            @map("request_query")
+  requestBody        Json?            @map("request_body")
+  responseHeaders    Json?            @map("response_headers")
+  responseBody       Json?            @map("response_body")
+  requestSizeBytes   Int?             @map("request_size_bytes")
+  responseSizeBytes  Int?             @map("response_size_bytes")
+  createdAt          DateTime         @default(now()) @map("created_at")
+
+  client       Client?       @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  apiKey       ApiKey?       @relation(fields: [apiKeyId], references: [id], onDelete: SetNull)
+  gatewayRoute GatewayRoute? @relation(fields: [gatewayRouteId], references: [id], onDelete: SetNull)
+
+  @@index([clientId])
+  @@index([apiKeyId])
+  @@index([gatewayRouteId])
+  @@index([attemptedAt])
+  @@index([requestOrigin])
+  @@index([sourceHost])
+  @@index([sourceIp])
+  @@index([destinationHost])
+  @@index([destinationIp])
+  @@index([statusCode])
+  @@index([result])
+  @@index([errorCode])
+  @@index([createdAt])
+  @@index([method])
+  @@map("request_logs")
+}
+
+model TrustedCa {
+  id                String   @id @default(uuid())
+  name              String
+  certificatePem    String   @map("certificate_pem")
+  fingerprintSha256 String   @unique @map("fingerprint_sha256")
+  subject           String
+  issuer            String
+  serialNumber      String   @map("serial_number")
+  validFrom         DateTime @map("valid_from")
+  validTo           DateTime @map("valid_to")
+  isRoot            Boolean  @default(false) @map("is_root")
+  active            Boolean  @default(true)
+  createdById       String   @map("created_by_id")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  createdBy User @relation(fields: [createdById], references: [id], onDelete: Restrict)
+
+  @@index([createdById])
+  @@index([active])
+  @@index([validTo])
+  @@index([createdAt])
+  @@index([name])
+  @@map("trusted_cas")
+}
+
+model SystemSetting {
+  id        String   @id @default(uuid())
+  key       String   @unique
+  value     String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("system_settings")
+}
