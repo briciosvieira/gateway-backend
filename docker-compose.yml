@@ -1,0 +1,27 @@
+version: "3.9"
+
+services:
+  gateway-hub-backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+
+    container_name: gateway_hub_backend
+
+    env_file:
+      - .env
+
+    ports:
+      - "3110:3110"
+
+    networks:
+      - wdc_shared
+
+    restart: always
+
+    entrypoint:
+      - /app/entrypoint.sh
+
+networks:
+  wdc_shared:
+    external: true

@@ -64,18 +64,20 @@ async function seedRoles(): Promise<void> {
   console.log('Roles synchronized successfully.');
 }
 
+const INITIAL_ADMIN_NAME = 'Administrator';
+const INITIAL_ADMIN_USERNAME = 'administrator';
+const INITIAL_ADMIN_EMAIL = 'administrator@gatewayhub.local';
+const INITIAL_ADMIN_PASSWORD = 'Admin@123';
+
+/**
+ * Creates the single fixed bootstrap administrator only when it does not
+ * exist yet. This never runs an `update` branch on purpose — once created,
+ * this record must never be touched again by the seed, even if it was
+ * hashed under an older algorithm/version or its fields were edited by an
+ * operator, so that re-running `docker compose up --build` (or any restart)
+ * can never reset a password the administrator has already changed.
+ */
 async function seedInitialAdmin(): Promise<void> {
-  const name = process.env.INITIAL_ADMIN_NAME;
-  const username = process.env.INITIAL_ADMIN_USERNAME;
-  const email = process.env.INITIAL_ADMIN_EMAIL;
-  const password = process.env.INITIAL_ADMIN_PASSWORD;
-
-  if (!name || !username || !email || !password) {
-    throw new Error(
-      'Initial administrator environment variables are not configured.',
-    );
-  }
-
   const adminRole = await prisma.role.findUnique({
     where: {
       code: RoleCode.ADMIN,
@@ -86,34 +88,24 @@ async function seedInitialAdmin(): Promise<void> {
     throw new Error('ADMIN role was not found.');
   }
 
-  const normalizedUsername = username.trim().toLowerCase();
-  const normalizedEmail = email.trim().toLowerCase();
-
-  const existingAdmin = await prisma.user.findFirst({
+  const existingAdmin = await prisma.user.findUnique({
     where: {
-      OR: [
-        {
-          username: normalizedUsername,
-        },
-        {
-          email: normalizedEmail,
-        },
-      ],
+      username: INITIAL_ADMIN_USERNAME,
     },
   });
 
   if (existingAdmin) {
-    console.log('Initial administrator already exists.');
+    console.log('Initial administrator already exists. Skipping creation.');
     return;
   }
 
-  const passwordHash = await argon2.hash(password);
+  const passwordHash = await argon2.hash(INITIAL_ADMIN_PASSWORD);
 
   await prisma.user.create({
     data: {
-      name: name.trim(),
-      username: normalizedUsername,
-      email: normalizedEmail,
+      name: INITIAL_ADMIN_NAME,
+      username: INITIAL_ADMIN_USERNAME,
+      email: INITIAL_ADMIN_EMAIL,
       passwordHash,
       roleId: adminRole.id,
       active: true,
