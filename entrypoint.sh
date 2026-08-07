@@ -1,7 +1,7 @@
 #!/bin/sh
 set -e
 
-echo "Starting Gateway Hub backend..."
+echo "Starting Gateway Hub LF backend..."
 
 echo "Waiting for PostgreSQL..."
 
@@ -19,12 +19,8 @@ npx prisma migrate deploy
 
 echo "Prisma migrations completed."
 
-echo "Running initial bootstrap (roles + administrator)..."
-
-npx prisma db seed
-
-echo "Initial bootstrap completed."
-
-echo "Starting Gateway Hub..."
+echo "Starting Gateway Hub LF..."
 
 exec npm run start:prod
+
+echo "Gateway Hub started."

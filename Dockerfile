@@ -1,6 +1,17 @@
-FROM node:20-alpine AS build
+# ===============================
+# Stage 1 - Build
+# ===============================
+
+FROM node:22-alpine AS build
 
 WORKDIR /app
+
+# Dependências necessárias para módulos nativos como argon2
+RUN apk add --no-cache \
+    python3 \
+    make \
+    g++ \
+    libc6-compat
 
 COPY package*.json ./
 
@@ -12,12 +23,20 @@ RUN npx prisma generate
 RUN npm run build
 
 
-FROM node:20-alpine
+# ===============================
+# Stage 2 - Runtime
+# ===============================
+
+FROM node:22-alpine
 
 WORKDIR /app
 
 ENV NODE_ENV=production
 ENV PORT=3110
+
+# Compatibilidade necessária para alguns módulos nativos
+RUN apk add --no-cache \
+    libc6-compat
 
 COPY --from=build /app/dist ./dist
 COPY --from=build /app/node_modules ./node_modules
