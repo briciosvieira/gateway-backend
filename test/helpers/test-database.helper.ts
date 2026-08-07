@@ -66,6 +66,7 @@ export class TestDatabase {
       this.prisma.requestLog.deleteMany(),
       this.prisma.routeHeader.deleteMany(),
       this.prisma.trustedCa.deleteMany(),
+      this.prisma.siteBranding.deleteMany(),
       this.prisma.apiKey.deleteMany(),
       this.prisma.allowedIp.deleteMany(),
       this.prisma.gatewayRoute.deleteMany(),

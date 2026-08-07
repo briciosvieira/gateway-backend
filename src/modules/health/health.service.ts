@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma/prisma.service';
+import { BrandingService } from '../branding/branding.service';
 
 export interface HealthResponse {
   status: string;
@@ -11,14 +12,20 @@ export interface HealthResponse {
 
 @Injectable()
 export class HealthService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly brandingService: BrandingService,
+  ) {}
 
   async getHealth(): Promise<HealthResponse> {
-    await this.prisma.$queryRaw`SELECT 1`;
+    const [, branding] = await Promise.all([
+      this.prisma.$queryRaw`SELECT 1`,
+      this.brandingService.getPublicBranding(),
+    ]);
 
     return {
       status: 'ok',
-      application: 'Gateway Hub LF',
+      application: branding.applicationName,
       database: 'connected',
       timestamp: new Date().toISOString(),
       uptime: process.uptime(),

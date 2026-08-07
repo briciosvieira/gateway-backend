@@ -77,3 +77,8 @@ export type TrustedCa = Prisma.TrustedCaModel
  * 
  */
 export type SystemSetting = Prisma.SystemSettingModel
+/**
+ * Model SiteBranding
+ * 
+ */
+export type SiteBranding = Prisma.SiteBrandingModel

@@ -22,8 +22,16 @@ const GATEWAY_PREFIX = '/gateway';
  * `request.file()` (see `TrustedCasController.create`), which requires a
  * multipart body — without this exception the JSON-only policy below
  * rejects every upload with a 415 before it ever reaches the controller.
+ * The three branding asset uploads (`BrandingAdminController.uploadLogo`/
+ * `uploadFavicon`/`uploadBrandImage`) read their file the same way and need
+ * the same exception.
  */
-const MULTIPART_ROUTES = new Set(['POST /api/v1/trusted-cas']);
+const MULTIPART_ROUTES = new Set([
+  'POST /api/v1/trusted-cas',
+  'POST /api/v1/branding/logo',
+  'POST /api/v1/branding/favicon',
+  'POST /api/v1/branding/brand-image',
+]);
 
 function getRequestId(request: FastifyRequest): string {
   const requestId = request.headers['x-request-id'];

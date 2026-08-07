@@ -6,27 +6,37 @@ Completed.
 
 ## Delivered
 
-- Backend client-aggregated summaries for API Keys, Allowed IPs, and Gateway Routes
-- New endpoints:
-  - `GET /api/v1/api-keys/clients-summary`
-  - `GET /api/v1/allowed-ips/clients-summary`
-  - `GET /api/v1/gateway-routes/clients-summary`
-- Shared summary query DTO base and feature-specific summary DTOs
-- Database-side aggregation, filtering, stable ordering, and pagination
-- Swagger/OpenAPI update for the three summary endpoints
-- Unit and integration validation for summary counts, filters, ordering, pagination, and no-N+1 behavior
-- Request Log `attemptedAt` backfill and `NOT NULL` enforcement
-- Request Log creation hardened so new logs always receive `attemptedAt`
-- Request Log filtering/ordering aligned to `attemptedAt`
-- Backend Trusted CAs management
-- PostgreSQL persistence for internal CAs
-- Cached Undici dispatcher reconstruction on CA changes
-- Gateway Proxy HTTPS trust integration with Node public roots + active internal CAs
-- Multipart admin upload
-- Audit logging
-- OpenAPI update
-- Unit, integration, TLS, e2e, and build validation
+- Backend global branding/personalization
+- New public endpoints:
+  - `GET /api/v1/branding`
+  - `GET /api/v1/branding/assets/logo`
+  - `GET /api/v1/branding/assets/favicon`
+  - `GET /api/v1/branding/assets/brand-image`
+- New `ADMIN` endpoints:
+  - `PATCH /api/v1/branding`
+  - `POST /api/v1/branding/logo`
+  - `POST /api/v1/branding/favicon`
+  - `POST /api/v1/branding/brand-image`
+  - `DELETE /api/v1/branding/logo`
+  - `DELETE /api/v1/branding/favicon`
+  - `DELETE /api/v1/branding/brand-image`
+- Global `applicationName` editing
+- Global custom logo, favicon, and brand image upload/replacement/removal
+- PostgreSQL binary storage with safe metadata
+- Safe SVG validation and binary signature checks
+- Public binary asset serving with cache headers and versioned URLs
+- Audit logging without raw bytes
+- Swagger/OpenAPI update
+- Unit, integration, e2e, build, and live backend verification completed
 
 ## Next Task
 
-Frontend — concluir reorganização por cliente de API Keys, Allowed IPs e Gateway Routes usando `clients-summary`
+Frontend — Configuracoes > Personalizacao
+
+- adicionar item `Personalizacao` abaixo de `Certificados`
+- editar `applicationName`
+- subir/remover logo
+- subir/remover favicon
+- subir/remover brand image
+- aplicar branding dinamico em Sidebar, Home, Login, browser title e favicon
+- manter fallback visual atual quando URLs de branding forem `null`

@@ -408,7 +408,8 @@ export const ModelName = {
   RouteHeader: 'RouteHeader',
   RequestLog: 'RequestLog',
   TrustedCa: 'TrustedCa',
-  SystemSetting: 'SystemSetting'
+  SystemSetting: 'SystemSetting',
+  SiteBranding: 'SiteBranding'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -424,7 +425,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "role" | "user" | "refreshToken" | "auditLog" | "client" | "apiKey" | "allowedIp" | "gatewayRoute" | "routeHeader" | "requestLog" | "trustedCa" | "systemSetting"
+    modelProps: "role" | "user" | "refreshToken" | "auditLog" | "client" | "apiKey" | "allowedIp" | "gatewayRoute" | "routeHeader" | "requestLog" | "trustedCa" | "systemSetting" | "siteBranding"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1316,6 +1317,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    SiteBranding: {
+      payload: Prisma.$SiteBrandingPayload<ExtArgs>
+      fields: Prisma.SiteBrandingFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.SiteBrandingFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SiteBrandingPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.SiteBrandingFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SiteBrandingPayload>
+        }
+        findFirst: {
+          args: Prisma.SiteBrandingFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SiteBrandingPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.SiteBrandingFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SiteBrandingPayload>
+        }
+        findMany: {
+          args: Prisma.SiteBrandingFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SiteBrandingPayload>[]
+        }
+        create: {
+          args: Prisma.SiteBrandingCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SiteBrandingPayload>
+        }
+        createMany: {
+          args: Prisma.SiteBrandingCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.SiteBrandingCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SiteBrandingPayload>[]
+        }
+        delete: {
+          args: Prisma.SiteBrandingDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SiteBrandingPayload>
+        }
+        update: {
+          args: Prisma.SiteBrandingUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SiteBrandingPayload>
+        }
+        deleteMany: {
+          args: Prisma.SiteBrandingDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.SiteBrandingUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.SiteBrandingUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SiteBrandingPayload>[]
+        }
+        upsert: {
+          args: Prisma.SiteBrandingUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SiteBrandingPayload>
+        }
+        aggregate: {
+          args: Prisma.SiteBrandingAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateSiteBranding>
+        }
+        groupBy: {
+          args: Prisma.SiteBrandingGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.SiteBrandingGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.SiteBrandingCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.SiteBrandingCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -1560,6 +1635,33 @@ export const SystemSettingScalarFieldEnum = {
 export type SystemSettingScalarFieldEnum = (typeof SystemSettingScalarFieldEnum)[keyof typeof SystemSettingScalarFieldEnum]
 
 
+export const SiteBrandingScalarFieldEnum = {
+  id: 'id',
+  applicationName: 'applicationName',
+  logoData: 'logoData',
+  logoMimeType: 'logoMimeType',
+  logoFileName: 'logoFileName',
+  logoSizeBytes: 'logoSizeBytes',
+  logoSha256: 'logoSha256',
+  faviconData: 'faviconData',
+  faviconMimeType: 'faviconMimeType',
+  faviconFileName: 'faviconFileName',
+  faviconSizeBytes: 'faviconSizeBytes',
+  faviconSha256: 'faviconSha256',
+  brandImageData: 'brandImageData',
+  brandImageMimeType: 'brandImageMimeType',
+  brandImageFileName: 'brandImageFileName',
+  brandImageSizeBytes: 'brandImageSizeBytes',
+  brandImageSha256: 'brandImageSha256',
+  createdById: 'createdById',
+  updatedById: 'updatedById',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type SiteBrandingScalarFieldEnum = (typeof SiteBrandingScalarFieldEnum)[keyof typeof SiteBrandingScalarFieldEnum]
+
+
 export const SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -1769,6 +1871,20 @@ export type ListEnumRequestLogResultFieldRefInput<$PrismaModel> = FieldRefInputT
 
 
 /**
+ * Reference to a field of type 'Bytes'
+ */
+export type BytesFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Bytes'>
+    
+
+
+/**
+ * Reference to a field of type 'Bytes[]'
+ */
+export type ListBytesFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Bytes[]'>
+    
+
+
+/**
  * Reference to a field of type 'Float'
  */
 export type FloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float'>
@@ -1944,6 +2060,7 @@ export type GlobalOmitConfig = {
   requestLog?: Prisma.RequestLogOmit
   trustedCa?: Prisma.TrustedCaOmit
   systemSetting?: Prisma.SystemSettingOmit
+  siteBranding?: Prisma.SiteBrandingOmit
 }
 
 /* Types for Logging */

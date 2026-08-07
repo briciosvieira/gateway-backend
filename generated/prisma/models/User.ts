@@ -234,6 +234,8 @@ export type UserWhereInput = {
   refreshTokens?: Prisma.RefreshTokenListRelationFilter
   auditLogs?: Prisma.AuditLogListRelationFilter
   trustedCas?: Prisma.TrustedCaListRelationFilter
+  createdBrandingConfigurations?: Prisma.SiteBrandingListRelationFilter
+  updatedBrandingConfigurations?: Prisma.SiteBrandingListRelationFilter
 }
 
 export type UserOrderByWithRelationInput = {
@@ -252,6 +254,8 @@ export type UserOrderByWithRelationInput = {
   refreshTokens?: Prisma.RefreshTokenOrderByRelationAggregateInput
   auditLogs?: Prisma.AuditLogOrderByRelationAggregateInput
   trustedCas?: Prisma.TrustedCaOrderByRelationAggregateInput
+  createdBrandingConfigurations?: Prisma.SiteBrandingOrderByRelationAggregateInput
+  updatedBrandingConfigurations?: Prisma.SiteBrandingOrderByRelationAggregateInput
 }
 
 export type UserWhereUniqueInput = Prisma.AtLeast<{
@@ -273,6 +277,8 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   refreshTokens?: Prisma.RefreshTokenListRelationFilter
   auditLogs?: Prisma.AuditLogListRelationFilter
   trustedCas?: Prisma.TrustedCaListRelationFilter
+  createdBrandingConfigurations?: Prisma.SiteBrandingListRelationFilter
+  updatedBrandingConfigurations?: Prisma.SiteBrandingListRelationFilter
 }, "id" | "username" | "email">
 
 export type UserOrderByWithAggregationInput = {
@@ -324,6 +330,8 @@ export type UserCreateInput = {
   refreshTokens?: Prisma.RefreshTokenCreateNestedManyWithoutUserInput
   auditLogs?: Prisma.AuditLogCreateNestedManyWithoutUserInput
   trustedCas?: Prisma.TrustedCaCreateNestedManyWithoutCreatedByInput
+  createdBrandingConfigurations?: Prisma.SiteBrandingCreateNestedManyWithoutCreatedByInput
+  updatedBrandingConfigurations?: Prisma.SiteBrandingCreateNestedManyWithoutUpdatedByInput
 }
 
 export type UserUncheckedCreateInput = {
@@ -341,6 +349,8 @@ export type UserUncheckedCreateInput = {
   refreshTokens?: Prisma.RefreshTokenUncheckedCreateNestedManyWithoutUserInput
   auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutUserInput
   trustedCas?: Prisma.TrustedCaUncheckedCreateNestedManyWithoutCreatedByInput
+  createdBrandingConfigurations?: Prisma.SiteBrandingUncheckedCreateNestedManyWithoutCreatedByInput
+  updatedBrandingConfigurations?: Prisma.SiteBrandingUncheckedCreateNestedManyWithoutUpdatedByInput
 }
 
 export type UserUpdateInput = {
@@ -358,6 +368,8 @@ export type UserUpdateInput = {
   refreshTokens?: Prisma.RefreshTokenUpdateManyWithoutUserNestedInput
   auditLogs?: Prisma.AuditLogUpdateManyWithoutUserNestedInput
   trustedCas?: Prisma.TrustedCaUpdateManyWithoutCreatedByNestedInput
+  createdBrandingConfigurations?: Prisma.SiteBrandingUpdateManyWithoutCreatedByNestedInput
+  updatedBrandingConfigurations?: Prisma.SiteBrandingUpdateManyWithoutUpdatedByNestedInput
 }
 
 export type UserUncheckedUpdateInput = {
@@ -375,6 +387,8 @@ export type UserUncheckedUpdateInput = {
   refreshTokens?: Prisma.RefreshTokenUncheckedUpdateManyWithoutUserNestedInput
   auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutUserNestedInput
   trustedCas?: Prisma.TrustedCaUncheckedUpdateManyWithoutCreatedByNestedInput
+  createdBrandingConfigurations?: Prisma.SiteBrandingUncheckedUpdateManyWithoutCreatedByNestedInput
+  updatedBrandingConfigurations?: Prisma.SiteBrandingUncheckedUpdateManyWithoutUpdatedByNestedInput
 }
 
 export type UserCreateManyInput = {
@@ -570,6 +584,38 @@ export type UserUpdateOneRequiredWithoutTrustedCasNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutTrustedCasInput, Prisma.UserUpdateWithoutTrustedCasInput>, Prisma.UserUncheckedUpdateWithoutTrustedCasInput>
 }
 
+export type UserCreateNestedOneWithoutCreatedBrandingConfigurationsInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutCreatedBrandingConfigurationsInput, Prisma.UserUncheckedCreateWithoutCreatedBrandingConfigurationsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutCreatedBrandingConfigurationsInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserCreateNestedOneWithoutUpdatedBrandingConfigurationsInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutUpdatedBrandingConfigurationsInput, Prisma.UserUncheckedCreateWithoutUpdatedBrandingConfigurationsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutUpdatedBrandingConfigurationsInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneWithoutCreatedBrandingConfigurationsNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutCreatedBrandingConfigurationsInput, Prisma.UserUncheckedCreateWithoutCreatedBrandingConfigurationsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutCreatedBrandingConfigurationsInput
+  upsert?: Prisma.UserUpsertWithoutCreatedBrandingConfigurationsInput
+  disconnect?: Prisma.UserWhereInput | boolean
+  delete?: Prisma.UserWhereInput | boolean
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutCreatedBrandingConfigurationsInput, Prisma.UserUpdateWithoutCreatedBrandingConfigurationsInput>, Prisma.UserUncheckedUpdateWithoutCreatedBrandingConfigurationsInput>
+}
+
+export type UserUpdateOneWithoutUpdatedBrandingConfigurationsNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutUpdatedBrandingConfigurationsInput, Prisma.UserUncheckedCreateWithoutUpdatedBrandingConfigurationsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutUpdatedBrandingConfigurationsInput
+  upsert?: Prisma.UserUpsertWithoutUpdatedBrandingConfigurationsInput
+  disconnect?: Prisma.UserWhereInput | boolean
+  delete?: Prisma.UserWhereInput | boolean
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutUpdatedBrandingConfigurationsInput, Prisma.UserUpdateWithoutUpdatedBrandingConfigurationsInput>, Prisma.UserUncheckedUpdateWithoutUpdatedBrandingConfigurationsInput>
+}
+
 export type UserCreateWithoutRoleInput = {
   id?: string
   name: string
@@ -584,6 +630,8 @@ export type UserCreateWithoutRoleInput = {
   refreshTokens?: Prisma.RefreshTokenCreateNestedManyWithoutUserInput
   auditLogs?: Prisma.AuditLogCreateNestedManyWithoutUserInput
   trustedCas?: Prisma.TrustedCaCreateNestedManyWithoutCreatedByInput
+  createdBrandingConfigurations?: Prisma.SiteBrandingCreateNestedManyWithoutCreatedByInput
+  updatedBrandingConfigurations?: Prisma.SiteBrandingCreateNestedManyWithoutUpdatedByInput
 }
 
 export type UserUncheckedCreateWithoutRoleInput = {
@@ -600,6 +648,8 @@ export type UserUncheckedCreateWithoutRoleInput = {
   refreshTokens?: Prisma.RefreshTokenUncheckedCreateNestedManyWithoutUserInput
   auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutUserInput
   trustedCas?: Prisma.TrustedCaUncheckedCreateNestedManyWithoutCreatedByInput
+  createdBrandingConfigurations?: Prisma.SiteBrandingUncheckedCreateNestedManyWithoutCreatedByInput
+  updatedBrandingConfigurations?: Prisma.SiteBrandingUncheckedCreateNestedManyWithoutUpdatedByInput
 }
 
 export type UserCreateOrConnectWithoutRoleInput = {
@@ -659,6 +709,8 @@ export type UserCreateWithoutRefreshTokensInput = {
   role: Prisma.RoleCreateNestedOneWithoutUsersInput
   auditLogs?: Prisma.AuditLogCreateNestedManyWithoutUserInput
   trustedCas?: Prisma.TrustedCaCreateNestedManyWithoutCreatedByInput
+  createdBrandingConfigurations?: Prisma.SiteBrandingCreateNestedManyWithoutCreatedByInput
+  updatedBrandingConfigurations?: Prisma.SiteBrandingCreateNestedManyWithoutUpdatedByInput
 }
 
 export type UserUncheckedCreateWithoutRefreshTokensInput = {
@@ -675,6 +727,8 @@ export type UserUncheckedCreateWithoutRefreshTokensInput = {
   updatedAt?: Date | string
   auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutUserInput
   trustedCas?: Prisma.TrustedCaUncheckedCreateNestedManyWithoutCreatedByInput
+  createdBrandingConfigurations?: Prisma.SiteBrandingUncheckedCreateNestedManyWithoutCreatedByInput
+  updatedBrandingConfigurations?: Prisma.SiteBrandingUncheckedCreateNestedManyWithoutUpdatedByInput
 }
 
 export type UserCreateOrConnectWithoutRefreshTokensInput = {
@@ -707,6 +761,8 @@ export type UserUpdateWithoutRefreshTokensInput = {
   role?: Prisma.RoleUpdateOneRequiredWithoutUsersNestedInput
   auditLogs?: Prisma.AuditLogUpdateManyWithoutUserNestedInput
   trustedCas?: Prisma.TrustedCaUpdateManyWithoutCreatedByNestedInput
+  createdBrandingConfigurations?: Prisma.SiteBrandingUpdateManyWithoutCreatedByNestedInput
+  updatedBrandingConfigurations?: Prisma.SiteBrandingUpdateManyWithoutUpdatedByNestedInput
 }
 
 export type UserUncheckedUpdateWithoutRefreshTokensInput = {
@@ -723,6 +779,8 @@ export type UserUncheckedUpdateWithoutRefreshTokensInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutUserNestedInput
   trustedCas?: Prisma.TrustedCaUncheckedUpdateManyWithoutCreatedByNestedInput
+  createdBrandingConfigurations?: Prisma.SiteBrandingUncheckedUpdateManyWithoutCreatedByNestedInput
+  updatedBrandingConfigurations?: Prisma.SiteBrandingUncheckedUpdateManyWithoutUpdatedByNestedInput
 }
 
 export type UserCreateWithoutAuditLogsInput = {
@@ -739,6 +797,8 @@ export type UserCreateWithoutAuditLogsInput = {
   role: Prisma.RoleCreateNestedOneWithoutUsersInput
   refreshTokens?: Prisma.RefreshTokenCreateNestedManyWithoutUserInput
   trustedCas?: Prisma.TrustedCaCreateNestedManyWithoutCreatedByInput
+  createdBrandingConfigurations?: Prisma.SiteBrandingCreateNestedManyWithoutCreatedByInput
+  updatedBrandingConfigurations?: Prisma.SiteBrandingCreateNestedManyWithoutUpdatedByInput
 }
 
 export type UserUncheckedCreateWithoutAuditLogsInput = {
@@ -755,6 +815,8 @@ export type UserUncheckedCreateWithoutAuditLogsInput = {
   updatedAt?: Date | string
   refreshTokens?: Prisma.RefreshTokenUncheckedCreateNestedManyWithoutUserInput
   trustedCas?: Prisma.TrustedCaUncheckedCreateNestedManyWithoutCreatedByInput
+  createdBrandingConfigurations?: Prisma.SiteBrandingUncheckedCreateNestedManyWithoutCreatedByInput
+  updatedBrandingConfigurations?: Prisma.SiteBrandingUncheckedCreateNestedManyWithoutUpdatedByInput
 }
 
 export type UserCreateOrConnectWithoutAuditLogsInput = {
@@ -787,6 +849,8 @@ export type UserUpdateWithoutAuditLogsInput = {
   role?: Prisma.RoleUpdateOneRequiredWithoutUsersNestedInput
   refreshTokens?: Prisma.RefreshTokenUpdateManyWithoutUserNestedInput
   trustedCas?: Prisma.TrustedCaUpdateManyWithoutCreatedByNestedInput
+  createdBrandingConfigurations?: Prisma.SiteBrandingUpdateManyWithoutCreatedByNestedInput
+  updatedBrandingConfigurations?: Prisma.SiteBrandingUpdateManyWithoutUpdatedByNestedInput
 }
 
 export type UserUncheckedUpdateWithoutAuditLogsInput = {
@@ -803,6 +867,8 @@ export type UserUncheckedUpdateWithoutAuditLogsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   refreshTokens?: Prisma.RefreshTokenUncheckedUpdateManyWithoutUserNestedInput
   trustedCas?: Prisma.TrustedCaUncheckedUpdateManyWithoutCreatedByNestedInput
+  createdBrandingConfigurations?: Prisma.SiteBrandingUncheckedUpdateManyWithoutCreatedByNestedInput
+  updatedBrandingConfigurations?: Prisma.SiteBrandingUncheckedUpdateManyWithoutUpdatedByNestedInput
 }
 
 export type UserCreateWithoutTrustedCasInput = {
@@ -819,6 +885,8 @@ export type UserCreateWithoutTrustedCasInput = {
   role: Prisma.RoleCreateNestedOneWithoutUsersInput
   refreshTokens?: Prisma.RefreshTokenCreateNestedManyWithoutUserInput
   auditLogs?: Prisma.AuditLogCreateNestedManyWithoutUserInput
+  createdBrandingConfigurations?: Prisma.SiteBrandingCreateNestedManyWithoutCreatedByInput
+  updatedBrandingConfigurations?: Prisma.SiteBrandingCreateNestedManyWithoutUpdatedByInput
 }
 
 export type UserUncheckedCreateWithoutTrustedCasInput = {
@@ -835,6 +903,8 @@ export type UserUncheckedCreateWithoutTrustedCasInput = {
   updatedAt?: Date | string
   refreshTokens?: Prisma.RefreshTokenUncheckedCreateNestedManyWithoutUserInput
   auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutUserInput
+  createdBrandingConfigurations?: Prisma.SiteBrandingUncheckedCreateNestedManyWithoutCreatedByInput
+  updatedBrandingConfigurations?: Prisma.SiteBrandingUncheckedCreateNestedManyWithoutUpdatedByInput
 }
 
 export type UserCreateOrConnectWithoutTrustedCasInput = {
@@ -867,6 +937,8 @@ export type UserUpdateWithoutTrustedCasInput = {
   role?: Prisma.RoleUpdateOneRequiredWithoutUsersNestedInput
   refreshTokens?: Prisma.RefreshTokenUpdateManyWithoutUserNestedInput
   auditLogs?: Prisma.AuditLogUpdateManyWithoutUserNestedInput
+  createdBrandingConfigurations?: Prisma.SiteBrandingUpdateManyWithoutCreatedByNestedInput
+  updatedBrandingConfigurations?: Prisma.SiteBrandingUpdateManyWithoutUpdatedByNestedInput
 }
 
 export type UserUncheckedUpdateWithoutTrustedCasInput = {
@@ -883,6 +955,184 @@ export type UserUncheckedUpdateWithoutTrustedCasInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   refreshTokens?: Prisma.RefreshTokenUncheckedUpdateManyWithoutUserNestedInput
   auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutUserNestedInput
+  createdBrandingConfigurations?: Prisma.SiteBrandingUncheckedUpdateManyWithoutCreatedByNestedInput
+  updatedBrandingConfigurations?: Prisma.SiteBrandingUncheckedUpdateManyWithoutUpdatedByNestedInput
+}
+
+export type UserCreateWithoutCreatedBrandingConfigurationsInput = {
+  id?: string
+  name: string
+  username: string
+  email: string
+  passwordHash: string
+  active?: boolean
+  firstLogin?: boolean
+  lastLoginAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  role: Prisma.RoleCreateNestedOneWithoutUsersInput
+  refreshTokens?: Prisma.RefreshTokenCreateNestedManyWithoutUserInput
+  auditLogs?: Prisma.AuditLogCreateNestedManyWithoutUserInput
+  trustedCas?: Prisma.TrustedCaCreateNestedManyWithoutCreatedByInput
+  updatedBrandingConfigurations?: Prisma.SiteBrandingCreateNestedManyWithoutUpdatedByInput
+}
+
+export type UserUncheckedCreateWithoutCreatedBrandingConfigurationsInput = {
+  id?: string
+  roleId: string
+  name: string
+  username: string
+  email: string
+  passwordHash: string
+  active?: boolean
+  firstLogin?: boolean
+  lastLoginAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  refreshTokens?: Prisma.RefreshTokenUncheckedCreateNestedManyWithoutUserInput
+  auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutUserInput
+  trustedCas?: Prisma.TrustedCaUncheckedCreateNestedManyWithoutCreatedByInput
+  updatedBrandingConfigurations?: Prisma.SiteBrandingUncheckedCreateNestedManyWithoutUpdatedByInput
+}
+
+export type UserCreateOrConnectWithoutCreatedBrandingConfigurationsInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutCreatedBrandingConfigurationsInput, Prisma.UserUncheckedCreateWithoutCreatedBrandingConfigurationsInput>
+}
+
+export type UserCreateWithoutUpdatedBrandingConfigurationsInput = {
+  id?: string
+  name: string
+  username: string
+  email: string
+  passwordHash: string
+  active?: boolean
+  firstLogin?: boolean
+  lastLoginAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  role: Prisma.RoleCreateNestedOneWithoutUsersInput
+  refreshTokens?: Prisma.RefreshTokenCreateNestedManyWithoutUserInput
+  auditLogs?: Prisma.AuditLogCreateNestedManyWithoutUserInput
+  trustedCas?: Prisma.TrustedCaCreateNestedManyWithoutCreatedByInput
+  createdBrandingConfigurations?: Prisma.SiteBrandingCreateNestedManyWithoutCreatedByInput
+}
+
+export type UserUncheckedCreateWithoutUpdatedBrandingConfigurationsInput = {
+  id?: string
+  roleId: string
+  name: string
+  username: string
+  email: string
+  passwordHash: string
+  active?: boolean
+  firstLogin?: boolean
+  lastLoginAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  refreshTokens?: Prisma.RefreshTokenUncheckedCreateNestedManyWithoutUserInput
+  auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutUserInput
+  trustedCas?: Prisma.TrustedCaUncheckedCreateNestedManyWithoutCreatedByInput
+  createdBrandingConfigurations?: Prisma.SiteBrandingUncheckedCreateNestedManyWithoutCreatedByInput
+}
+
+export type UserCreateOrConnectWithoutUpdatedBrandingConfigurationsInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutUpdatedBrandingConfigurationsInput, Prisma.UserUncheckedCreateWithoutUpdatedBrandingConfigurationsInput>
+}
+
+export type UserUpsertWithoutCreatedBrandingConfigurationsInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutCreatedBrandingConfigurationsInput, Prisma.UserUncheckedUpdateWithoutCreatedBrandingConfigurationsInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutCreatedBrandingConfigurationsInput, Prisma.UserUncheckedCreateWithoutCreatedBrandingConfigurationsInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutCreatedBrandingConfigurationsInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutCreatedBrandingConfigurationsInput, Prisma.UserUncheckedUpdateWithoutCreatedBrandingConfigurationsInput>
+}
+
+export type UserUpdateWithoutCreatedBrandingConfigurationsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  username?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  firstLogin?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  role?: Prisma.RoleUpdateOneRequiredWithoutUsersNestedInput
+  refreshTokens?: Prisma.RefreshTokenUpdateManyWithoutUserNestedInput
+  auditLogs?: Prisma.AuditLogUpdateManyWithoutUserNestedInput
+  trustedCas?: Prisma.TrustedCaUpdateManyWithoutCreatedByNestedInput
+  updatedBrandingConfigurations?: Prisma.SiteBrandingUpdateManyWithoutUpdatedByNestedInput
+}
+
+export type UserUncheckedUpdateWithoutCreatedBrandingConfigurationsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  roleId?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  username?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  firstLogin?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  refreshTokens?: Prisma.RefreshTokenUncheckedUpdateManyWithoutUserNestedInput
+  auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutUserNestedInput
+  trustedCas?: Prisma.TrustedCaUncheckedUpdateManyWithoutCreatedByNestedInput
+  updatedBrandingConfigurations?: Prisma.SiteBrandingUncheckedUpdateManyWithoutUpdatedByNestedInput
+}
+
+export type UserUpsertWithoutUpdatedBrandingConfigurationsInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutUpdatedBrandingConfigurationsInput, Prisma.UserUncheckedUpdateWithoutUpdatedBrandingConfigurationsInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutUpdatedBrandingConfigurationsInput, Prisma.UserUncheckedCreateWithoutUpdatedBrandingConfigurationsInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutUpdatedBrandingConfigurationsInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutUpdatedBrandingConfigurationsInput, Prisma.UserUncheckedUpdateWithoutUpdatedBrandingConfigurationsInput>
+}
+
+export type UserUpdateWithoutUpdatedBrandingConfigurationsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  username?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  firstLogin?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  role?: Prisma.RoleUpdateOneRequiredWithoutUsersNestedInput
+  refreshTokens?: Prisma.RefreshTokenUpdateManyWithoutUserNestedInput
+  auditLogs?: Prisma.AuditLogUpdateManyWithoutUserNestedInput
+  trustedCas?: Prisma.TrustedCaUpdateManyWithoutCreatedByNestedInput
+  createdBrandingConfigurations?: Prisma.SiteBrandingUpdateManyWithoutCreatedByNestedInput
+}
+
+export type UserUncheckedUpdateWithoutUpdatedBrandingConfigurationsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  roleId?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  username?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  firstLogin?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  refreshTokens?: Prisma.RefreshTokenUncheckedUpdateManyWithoutUserNestedInput
+  auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutUserNestedInput
+  trustedCas?: Prisma.TrustedCaUncheckedUpdateManyWithoutCreatedByNestedInput
+  createdBrandingConfigurations?: Prisma.SiteBrandingUncheckedUpdateManyWithoutCreatedByNestedInput
 }
 
 export type UserCreateManyRoleInput = {
@@ -912,6 +1162,8 @@ export type UserUpdateWithoutRoleInput = {
   refreshTokens?: Prisma.RefreshTokenUpdateManyWithoutUserNestedInput
   auditLogs?: Prisma.AuditLogUpdateManyWithoutUserNestedInput
   trustedCas?: Prisma.TrustedCaUpdateManyWithoutCreatedByNestedInput
+  createdBrandingConfigurations?: Prisma.SiteBrandingUpdateManyWithoutCreatedByNestedInput
+  updatedBrandingConfigurations?: Prisma.SiteBrandingUpdateManyWithoutUpdatedByNestedInput
 }
 
 export type UserUncheckedUpdateWithoutRoleInput = {
@@ -928,6 +1180,8 @@ export type UserUncheckedUpdateWithoutRoleInput = {
   refreshTokens?: Prisma.RefreshTokenUncheckedUpdateManyWithoutUserNestedInput
   auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutUserNestedInput
   trustedCas?: Prisma.TrustedCaUncheckedUpdateManyWithoutCreatedByNestedInput
+  createdBrandingConfigurations?: Prisma.SiteBrandingUncheckedUpdateManyWithoutCreatedByNestedInput
+  updatedBrandingConfigurations?: Prisma.SiteBrandingUncheckedUpdateManyWithoutUpdatedByNestedInput
 }
 
 export type UserUncheckedUpdateManyWithoutRoleInput = {
@@ -952,12 +1206,16 @@ export type UserCountOutputType = {
   refreshTokens: number
   auditLogs: number
   trustedCas: number
+  createdBrandingConfigurations: number
+  updatedBrandingConfigurations: number
 }
 
 export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   refreshTokens?: boolean | UserCountOutputTypeCountRefreshTokensArgs
   auditLogs?: boolean | UserCountOutputTypeCountAuditLogsArgs
   trustedCas?: boolean | UserCountOutputTypeCountTrustedCasArgs
+  createdBrandingConfigurations?: boolean | UserCountOutputTypeCountCreatedBrandingConfigurationsArgs
+  updatedBrandingConfigurations?: boolean | UserCountOutputTypeCountUpdatedBrandingConfigurationsArgs
 }
 
 /**
@@ -991,6 +1249,20 @@ export type UserCountOutputTypeCountTrustedCasArgs<ExtArgs extends runtime.Types
   where?: Prisma.TrustedCaWhereInput
 }
 
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountCreatedBrandingConfigurationsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.SiteBrandingWhereInput
+}
+
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountUpdatedBrandingConfigurationsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.SiteBrandingWhereInput
+}
+
 
 export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -1008,6 +1280,8 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   refreshTokens?: boolean | Prisma.User$refreshTokensArgs<ExtArgs>
   auditLogs?: boolean | Prisma.User$auditLogsArgs<ExtArgs>
   trustedCas?: boolean | Prisma.User$trustedCasArgs<ExtArgs>
+  createdBrandingConfigurations?: boolean | Prisma.User$createdBrandingConfigurationsArgs<ExtArgs>
+  updatedBrandingConfigurations?: boolean | Prisma.User$updatedBrandingConfigurationsArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["user"]>
 
@@ -1061,6 +1335,8 @@ export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   refreshTokens?: boolean | Prisma.User$refreshTokensArgs<ExtArgs>
   auditLogs?: boolean | Prisma.User$auditLogsArgs<ExtArgs>
   trustedCas?: boolean | Prisma.User$trustedCasArgs<ExtArgs>
+  createdBrandingConfigurations?: boolean | Prisma.User$createdBrandingConfigurationsArgs<ExtArgs>
+  updatedBrandingConfigurations?: boolean | Prisma.User$updatedBrandingConfigurationsArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type UserIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1077,6 +1353,8 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     refreshTokens: Prisma.$RefreshTokenPayload<ExtArgs>[]
     auditLogs: Prisma.$AuditLogPayload<ExtArgs>[]
     trustedCas: Prisma.$TrustedCaPayload<ExtArgs>[]
+    createdBrandingConfigurations: Prisma.$SiteBrandingPayload<ExtArgs>[]
+    updatedBrandingConfigurations: Prisma.$SiteBrandingPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1488,6 +1766,8 @@ export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Typ
   refreshTokens<T extends Prisma.User$refreshTokensArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$refreshTokensArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$RefreshTokenPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   auditLogs<T extends Prisma.User$auditLogsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$auditLogsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AuditLogPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   trustedCas<T extends Prisma.User$trustedCasArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$trustedCasArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$TrustedCaPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  createdBrandingConfigurations<T extends Prisma.User$createdBrandingConfigurationsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$createdBrandingConfigurationsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$SiteBrandingPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  updatedBrandingConfigurations<T extends Prisma.User$updatedBrandingConfigurationsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$updatedBrandingConfigurationsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$SiteBrandingPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1998,6 +2278,54 @@ export type User$trustedCasArgs<ExtArgs extends runtime.Types.Extensions.Interna
   take?: number
   skip?: number
   distinct?: Prisma.TrustedCaScalarFieldEnum | Prisma.TrustedCaScalarFieldEnum[]
+}
+
+/**
+ * User.createdBrandingConfigurations
+ */
+export type User$createdBrandingConfigurationsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the SiteBranding
+   */
+  select?: Prisma.SiteBrandingSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the SiteBranding
+   */
+  omit?: Prisma.SiteBrandingOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.SiteBrandingInclude<ExtArgs> | null
+  where?: Prisma.SiteBrandingWhereInput
+  orderBy?: Prisma.SiteBrandingOrderByWithRelationInput | Prisma.SiteBrandingOrderByWithRelationInput[]
+  cursor?: Prisma.SiteBrandingWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.SiteBrandingScalarFieldEnum | Prisma.SiteBrandingScalarFieldEnum[]
+}
+
+/**
+ * User.updatedBrandingConfigurations
+ */
+export type User$updatedBrandingConfigurationsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the SiteBranding
+   */
+  select?: Prisma.SiteBrandingSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the SiteBranding
+   */
+  omit?: Prisma.SiteBrandingOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.SiteBrandingInclude<ExtArgs> | null
+  where?: Prisma.SiteBrandingWhereInput
+  orderBy?: Prisma.SiteBrandingOrderByWithRelationInput | Prisma.SiteBrandingOrderByWithRelationInput[]
+  cursor?: Prisma.SiteBrandingWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.SiteBrandingScalarFieldEnum | Prisma.SiteBrandingScalarFieldEnum[]
 }
 
 /**

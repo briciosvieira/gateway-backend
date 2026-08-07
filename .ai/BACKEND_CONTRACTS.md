@@ -241,3 +241,229 @@ Existing relevant indexes already used:
 - `gateway_routes_active_idx`
 
 No new index or structural migration was required for this delivery.
+
+## Branding
+
+- Prisma model: `SiteBranding`
+- Persistence: PostgreSQL table `site_branding`
+- Scope: exactly 1 global branding row for the whole installation
+- Default row id: `site-branding`
+- Default behavior without custom row:
+  - `applicationName = Gateway Hub LF`
+  - `logoUrl = null`
+  - `faviconUrl = null`
+  - `brandImageUrl = null`
+- Frontend fallback remains static when asset URLs are `null`
+
+### Data Model
+
+- `applicationName`
+- `logoData`
+- `logoMimeType`
+- `logoFileName`
+- `logoSizeBytes`
+- `logoSha256`
+- `faviconData`
+- `faviconMimeType`
+- `faviconFileName`
+- `faviconSizeBytes`
+- `faviconSha256`
+- `brandImageData`
+- `brandImageMimeType`
+- `brandImageFileName`
+- `brandImageSizeBytes`
+- `brandImageSha256`
+- `createdById`
+- `updatedById`
+- `createdAt`
+- `updatedAt`
+
+### Storage Strategy
+
+- Branding assets are stored in PostgreSQL `Bytes`
+- No asset is stored as base64 text in JSON or `Text`
+- Metadata stored per asset:
+  - MIME type
+  - sanitized file name
+  - size in bytes
+  - SHA-256 fingerprint
+- File bytes are never returned inside JSON responses
+
+### Public Endpoints
+
+- `GET /api/v1/branding`
+- `GET /api/v1/branding/assets/logo`
+- `GET /api/v1/branding/assets/favicon`
+- `GET /api/v1/branding/assets/brand-image`
+
+`GET /api/v1/branding` is public and returns only:
+
+- `applicationName`
+- `logoUrl`
+- `faviconUrl`
+- `brandImageUrl`
+- `updatedAt`
+
+### Administrative Endpoints
+
+- `PATCH /api/v1/branding`
+- `POST /api/v1/branding/logo`
+- `POST /api/v1/branding/favicon`
+- `POST /api/v1/branding/brand-image`
+- `DELETE /api/v1/branding/logo`
+- `DELETE /api/v1/branding/favicon`
+- `DELETE /api/v1/branding/brand-image`
+
+### Roles
+
+- Public read: no authentication required
+- Write / upload / delete: `ADMIN` only
+
+### Update Contract
+
+`PATCH /api/v1/branding`
+
+- body:
+  - `applicationName: string`
+- validation:
+  - required when sent
+  - trim applied
+  - min length `2`
+  - max length `100`
+  - blank values rejected
+  - `<` and `>` rejected
+
+### Multipart Contract
+
+Each asset uses `multipart/form-data` with one field:
+
+- `file`
+
+Per endpoint:
+
+- `POST /api/v1/branding/logo`
+- `POST /api/v1/branding/favicon`
+- `POST /api/v1/branding/brand-image`
+
+### Accepted Formats
+
+Logo:
+
+- `image/png`
+- `image/jpeg`
+- `image/jpg`
+- `image/webp`
+- `image/svg+xml`
+
+Favicon:
+
+- `image/png`
+- `image/jpeg`
+- `image/jpg`
+- `image/webp`
+- `image/svg+xml`
+- `image/x-icon`
+- `image/vnd.microsoft.icon`
+
+Brand image:
+
+- `image/png`
+- `image/jpeg`
+- `image/jpg`
+- `image/webp`
+- `image/svg+xml`
+
+### Limits
+
+- logo: `2 MB`
+- favicon: `512 KB`
+- brand image: `5 MB`
+
+### File Validation
+
+- file cannot be empty
+- extension is not trusted
+- MIME type is checked
+- magic bytes / binary signature are checked for:
+  - PNG
+  - JPEG
+  - WebP
+  - ICO
+- SVG is parsed and validated as XML
+- uploaded file names are sanitized with basename extraction only
+- arbitrary files such as HTML, JS, PDF, ZIP, executables are rejected
+
+### SVG Security Strategy
+
+- uses `fast-xml-parser`
+- XML must be valid
+- `<!DOCTYPE>` and `<!ENTITY>` are rejected
+- root node must be `<svg>`
+- only a whitelist of safe tags is accepted
+- dangerous tags are rejected, including:
+  - `script`
+  - `foreignObject`
+  - `iframe`
+  - `object`
+  - `embed`
+  - `audio`
+  - `video`
+  - `image`
+  - `a`
+  - animation tags
+  - `use`
+  - `style`
+- event handler attributes are rejected
+- `href`, `xlink:href`, `src`, `style` are rejected
+- values containing `javascript:`, `data:`, `vbscript:`, or `url(` are rejected
+
+### Asset Serving / Cache
+
+- assets are served as binary responses
+- correct `Content-Type` is returned
+- `Content-Length` is returned
+- `ETag` is returned from SHA-256
+- `Last-Modified` is returned from `updatedAt`
+- `Cache-Control: public, max-age=31536000, immutable`
+- asset URLs are versioned with `?v=<sha256>`
+- conditional requests with `If-None-Match` and `If-Modified-Since` return `304`
+
+### Replacement / Reset Semantics
+
+- a new upload of the same asset replaces the previous one
+- no asset history is kept
+- deleting an asset removes only that asset metadata and bytes
+- deleting an asset does not delete the branding row
+- after delete:
+  - public asset URL becomes `null`
+  - direct binary endpoint returns `404`
+
+### Audit
+
+- audit entity: `SYSTEM_SETTING`
+- audit row `entityId`: `site-branding`
+- audited changes:
+  - application name update
+  - logo upload / replace / remove
+  - favicon upload / replace / remove
+  - brand image upload / replace / remove
+- asset bytes are never written to audit logs
+- audit stores only safe metadata:
+  - asset type
+  - MIME type
+  - file name
+  - size
+  - SHA-256
+  - request id
+  - source IP
+
+### Error Codes
+
+- `INVALID_BRANDING_APPLICATION_NAME`
+- `INVALID_MULTIPART_REQUEST`
+- `INVALID_BRANDING_UPLOAD`
+- `INVALID_BRANDING_ASSET`
+- `UNSUPPORTED_BRANDING_ASSET_TYPE`
+- `INVALID_BRANDING_ASSET_MIME_TYPE`
+- `UNSAFE_SVG_NOT_ALLOWED`
+- `FILE_TOO_LARGE`

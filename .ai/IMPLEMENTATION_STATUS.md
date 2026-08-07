@@ -18,6 +18,28 @@
 - Added Swagger/OpenAPI documentation for the three new summary endpoints
 - Added unit coverage proving summary services use 2 raw queries instead of per-client queries
 - Added integration coverage for counts, filters, stable ordering, pagination, and `/docs-json`
+- Added Prisma model `SiteBranding` and migration `20260807170255_add_site_branding`
+- Added global branding backend with one installation-wide record in `site_branding`
+- Added public branding read endpoints:
+  - `GET /api/v1/branding`
+  - `GET /api/v1/branding/assets/logo`
+  - `GET /api/v1/branding/assets/favicon`
+  - `GET /api/v1/branding/assets/brand-image`
+- Added `ADMIN` branding management endpoints for name update, asset upload, and asset removal
+- Added binary asset persistence in PostgreSQL with MIME type, file name, size, and SHA-256 metadata
+- Added safe SVG validation with `fast-xml-parser` plus binary signature validation for PNG/JPEG/WebP/ICO
+- Added cacheable public asset serving with `ETag`, `Last-Modified`, immutable cache headers, and versioned URLs
+- Added branding audit logging through `AuditEntity.SYSTEM_SETTING` without persisting raw bytes in audit payloads
+- Added unit coverage for branding service and branding asset validation
+- Added integration coverage for:
+  - public unauthenticated branding read
+  - `ADMIN` name update
+  - non-admin `403`
+  - PNG/JPEG/ICO/SVG asset flows
+  - malicious SVG rejection
+  - asset removal fallback
+  - public binary headers
+  - `/docs-json`
 - Made `RequestLog.attemptedAt` mandatory at the Prisma, database, and TypeScript layers
 - Added migration `20260807130613_make_request_log_attempted_at_required`
 - Backfilled historical `request_logs.attempted_at` with `created_at` where null
@@ -56,6 +78,9 @@
 - Trusted CAs admin is complete on backend
 - Frontend for certificate management remains pending by design
 - Frontend reorganization by client for API Keys, Allowed IPs, and Gateway Routes remains pending by design
+- Frontend for branding/personalization remains pending by design
 - Request Logs now always use UTC `attemptedAt` as the primary chronological timestamp
 - Client resource summaries use raw SQL because Prisma's higher-level aggregation APIs were not sufficient for combined JOIN + conditional aggregate + grouped pagination + stable sort requirements
-- No new migration was needed because the required `client_id` indexes already existed
+- The client summary delivery did not require a migration because the required `client_id` indexes already existed
+- Branding required a new migration because binary asset storage and metadata do not fit the existing `SystemSetting` key/value shape cleanly
+- Test database was migrated with `20260807170255_add_site_branding` before running the full integration suite

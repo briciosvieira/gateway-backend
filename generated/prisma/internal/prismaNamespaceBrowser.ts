@@ -62,7 +62,8 @@ export const ModelName = {
   RouteHeader: 'RouteHeader',
   RequestLog: 'RequestLog',
   TrustedCa: 'TrustedCa',
-  SystemSetting: 'SystemSetting'
+  SystemSetting: 'SystemSetting',
+  SiteBranding: 'SiteBranding'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -284,6 +285,33 @@ export const SystemSettingScalarFieldEnum = {
 } as const
 
 export type SystemSettingScalarFieldEnum = (typeof SystemSettingScalarFieldEnum)[keyof typeof SystemSettingScalarFieldEnum]
+
+
+export const SiteBrandingScalarFieldEnum = {
+  id: 'id',
+  applicationName: 'applicationName',
+  logoData: 'logoData',
+  logoMimeType: 'logoMimeType',
+  logoFileName: 'logoFileName',
+  logoSizeBytes: 'logoSizeBytes',
+  logoSha256: 'logoSha256',
+  faviconData: 'faviconData',
+  faviconMimeType: 'faviconMimeType',
+  faviconFileName: 'faviconFileName',
+  faviconSizeBytes: 'faviconSizeBytes',
+  faviconSha256: 'faviconSha256',
+  brandImageData: 'brandImageData',
+  brandImageMimeType: 'brandImageMimeType',
+  brandImageFileName: 'brandImageFileName',
+  brandImageSizeBytes: 'brandImageSizeBytes',
+  brandImageSha256: 'brandImageSha256',
+  createdById: 'createdById',
+  updatedById: 'updatedById',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type SiteBrandingScalarFieldEnum = (typeof SiteBrandingScalarFieldEnum)[keyof typeof SiteBrandingScalarFieldEnum]
 
 
 export const SortOrder = {

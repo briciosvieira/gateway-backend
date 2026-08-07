@@ -72,7 +72,7 @@ export async function createTestApp(): Promise<NestFastifyApplication> {
       files: 1,
       fields: 5,
       parts: 6,
-      fileSize: 1024 * 1024,
+      fileSize: 5 * 1024 * 1024,
     },
   });
 

@@ -28,8 +28,16 @@ import {
   getHttpsEnabled,
   validateRequiredEnvVars,
 } from './config/security.config';
+import { BrandingService } from './modules/branding/branding.service';
 
-const ALLOWED_CORS_METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'];
+const ALLOWED_CORS_METHODS = [
+  'GET',
+  'POST',
+  'PUT',
+  'PATCH',
+  'DELETE',
+  'OPTIONS',
+];
 const ALLOWED_CORS_HEADERS = [
   'Authorization',
   'Content-Type',
@@ -86,7 +94,7 @@ async function bootstrap(): Promise<void> {
       files: 1,
       fields: 5,
       parts: 6,
-      fileSize: 1024 * 1024,
+      fileSize: 5 * 1024 * 1024,
     },
   });
 
@@ -117,10 +125,18 @@ async function bootstrap(): Promise<void> {
 
   app.useGlobalFilters(new HttpExceptionFilter());
 
+  // Read once at boot from the same SiteBranding row the admin panel edits —
+  // Swagger's document is generated a single time here, so this reflects
+  // whatever the application name was when the server last started, not
+  // live edits made afterwards (that would require regenerating/re-serving
+  // the document per request, which SwaggerModule isn't built for).
+  const brandingService = app.get(BrandingService);
+  const branding = await brandingService.getPublicBranding();
+
   const swaggerConfig = new DocumentBuilder()
-    .setTitle('Gateway Hub LF API')
+    .setTitle(`${branding.applicationName} API`)
     .setDescription(
-      'API administrativa e gateway de integrações do Gateway Hub LF.',
+      `API administrativa e gateway de integrações do ${branding.applicationName}.`,
     )
     .setVersion('1.0.0')
     .addBearerAuth()
@@ -152,7 +168,9 @@ async function bootstrap(): Promise<void> {
     host,
   });
 
-  console.log(`Gateway Hub LF running at http://localhost:${port}`);
+  console.log(
+    `${branding.applicationName} running at http://localhost:${port}`,
+  );
   console.log(`Swagger available at http://localhost:${port}/docs`);
 }
 

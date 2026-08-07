@@ -21,6 +21,7 @@ import { GatewayProxyModule } from './modules/gateway-proxy/gateway-proxy.module
 import { RequestLogsModule } from './modules/request-logs/request-logs.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { TrustedCasModule } from './modules/trusted-cas/trusted-cas.module';
+import { BrandingModule } from './modules/branding/branding.module';
 
 @Module({
   imports: [
@@ -43,6 +44,7 @@ import { TrustedCasModule } from './modules/trusted-cas/trusted-cas.module';
     RouteHeadersModule,
     RequestLogsModule,
     TrustedCasModule,
+    BrandingModule,
     GatewayProxyModule,
     DashboardModule,
   ],

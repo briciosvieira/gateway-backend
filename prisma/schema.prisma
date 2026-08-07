@@ -43,10 +43,12 @@ model User {
   firstLogin   Boolean   @default(true) @map("first_login")
   lastLoginAt  DateTime? @map("last_login_at")
 
-  role          Role           @relation(fields: [roleId], references: [id], onDelete: Restrict)
-  refreshTokens RefreshToken[]
-  auditLogs     AuditLog[]
-  trustedCas    TrustedCa[]
+  role                          Role           @relation(fields: [roleId], references: [id], onDelete: Restrict)
+  refreshTokens                 RefreshToken[]
+  auditLogs                     AuditLog[]
+  trustedCas                    TrustedCa[]
+  createdBrandingConfigurations SiteBranding[] @relation("SiteBrandingCreatedBy")
+  updatedBrandingConfigurations SiteBranding[] @relation("SiteBrandingUpdatedBy")
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -348,4 +350,34 @@ model SystemSetting {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   @@map("system_settings")
+}
+
+model SiteBranding {
+  id                  String   @id @default("site-branding")
+  applicationName     String   @map("application_name")
+  logoData            Bytes?   @map("logo_data")
+  logoMimeType        String?  @map("logo_mime_type")
+  logoFileName        String?  @map("logo_file_name")
+  logoSizeBytes       Int?     @map("logo_size_bytes")
+  logoSha256          String?  @map("logo_sha256")
+  faviconData         Bytes?   @map("favicon_data")
+  faviconMimeType     String?  @map("favicon_mime_type")
+  faviconFileName     String?  @map("favicon_file_name")
+  faviconSizeBytes    Int?     @map("favicon_size_bytes")
+  faviconSha256       String?  @map("favicon_sha256")
+  brandImageData      Bytes?   @map("brand_image_data")
+  brandImageMimeType  String?  @map("brand_image_mime_type")
+  brandImageFileName  String?  @map("brand_image_file_name")
+  brandImageSizeBytes Int?     @map("brand_image_size_bytes")
+  brandImageSha256    String?  @map("brand_image_sha256")
+  createdById         String?  @map("created_by_id")
+  updatedById         String?  @map("updated_by_id")
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @updatedAt @map("updated_at")
+
+  createdBy User? @relation("SiteBrandingCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  updatedBy User? @relation("SiteBrandingUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+
+  @@index([updatedAt])
+  @@map("site_branding")
 }
