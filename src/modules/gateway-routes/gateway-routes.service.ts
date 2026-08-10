@@ -1,5 +1,11 @@
-import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import { AuditAction, AuditEntity, Prisma } from '../../../generated/prisma/client';
+import {
+  BadRequestException,
+  ConflictException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { AuditAction, AuditEntity, Prisma, RoleCode } from '../../../generated/prisma/client';
 import type {
   ClientResourceSummarySortDirection,
   ClientResourceSummaryStatus,
@@ -34,6 +40,7 @@ const gatewayRouteSelect = {
   timeoutMs: true,
   retryCount: true,
   active: true,
+  requiresApiKey: true,
   createdAt: true,
   updatedAt: true,
   client: {
@@ -85,6 +92,15 @@ export class GatewayRoutesService {
       throw new BadRequestException('Client is inactive.');
     }
 
+    const requiresApiKey = dto.requiresApiKey ?? true;
+
+    if (!requiresApiKey && currentUser.role !== RoleCode.ADMIN) {
+      throw new ForbiddenException({
+        message: 'Only ADMIN can create a gateway route that does not require an API Key.',
+        code: 'REQUIRES_API_KEY_ADMIN_ONLY',
+      });
+    }
+
     const normalizedSlug = normalizeGatewayRouteSlug(dto.slug);
     const normalizedDestinationUrl = normalizeDestinationUrl(dto.destinationUrl);
 
@@ -109,6 +125,7 @@ export class GatewayRoutesService {
         timeoutMs: dto.timeoutMs ?? 30000,
         retryCount: dto.retryCount ?? 0,
         active: true,
+        requiresApiKey,
       },
       select: gatewayRouteSelect,
     });
@@ -127,6 +144,7 @@ export class GatewayRoutesService {
         timeoutMs: route.timeoutMs,
         retryCount: route.retryCount,
         active: route.active,
+        requiresApiKey: route.requiresApiKey,
       },
       sourceIp: requestContext.sourceIp,
       requestId: requestContext.requestId,
@@ -285,6 +303,17 @@ export class GatewayRoutesService {
   ) {
     const currentRoute = await this.getGatewayRouteOrThrow(gatewayRouteId);
 
+    if (
+      dto.requiresApiKey !== undefined &&
+      dto.requiresApiKey !== currentRoute.requiresApiKey &&
+      currentUser.role !== RoleCode.ADMIN
+    ) {
+      throw new ForbiddenException({
+        message: 'Only ADMIN can change the API Key requirement of a gateway route.',
+        code: 'REQUIRES_API_KEY_ADMIN_ONLY',
+      });
+    }
+
     const normalizedSlug =
       dto.slug !== undefined ? normalizeGatewayRouteSlug(dto.slug) : undefined;
 
@@ -321,6 +350,7 @@ export class GatewayRoutesService {
           : {}),
         ...(dto.timeoutMs !== undefined ? { timeoutMs: dto.timeoutMs } : {}),
         ...(dto.retryCount !== undefined ? { retryCount: dto.retryCount } : {}),
+        ...(dto.requiresApiKey !== undefined ? { requiresApiKey: dto.requiresApiKey } : {}),
       },
       select: gatewayRouteSelect,
     });
@@ -338,6 +368,7 @@ export class GatewayRoutesService {
         description: currentRoute.description,
         timeoutMs: currentRoute.timeoutMs,
         retryCount: currentRoute.retryCount,
+        requiresApiKey: currentRoute.requiresApiKey,
       },
       newValue: {
         name: updatedRoute.name,
@@ -347,11 +378,40 @@ export class GatewayRoutesService {
         description: updatedRoute.description,
         timeoutMs: updatedRoute.timeoutMs,
         retryCount: updatedRoute.retryCount,
+        requiresApiKey: updatedRoute.requiresApiKey,
       },
       sourceIp: requestContext.sourceIp,
       requestId: requestContext.requestId,
       description: `Gateway route ${updatedRoute.slug} was updated.`,
     });
+
+    if (updatedRoute.requiresApiKey !== currentRoute.requiresApiKey) {
+      await this.auditLogsService.create({
+        userId: currentUser.id,
+        action: AuditAction.UPDATE,
+        entity: AuditEntity.GATEWAY_ROUTE,
+        entityId: updatedRoute.id,
+        previousValue: {
+          gatewayRouteId: currentRoute.id,
+          clientId: currentRoute.clientId,
+          name: currentRoute.name,
+          slug: currentRoute.slug,
+          requiresApiKey: currentRoute.requiresApiKey,
+        },
+        newValue: {
+          gatewayRouteId: updatedRoute.id,
+          clientId: updatedRoute.clientId,
+          name: updatedRoute.name,
+          slug: updatedRoute.slug,
+          requiresApiKey: updatedRoute.requiresApiKey,
+        },
+        sourceIp: requestContext.sourceIp,
+        requestId: requestContext.requestId,
+        description: updatedRoute.requiresApiKey
+          ? `Gateway Route API Key requirement enabled for route ${updatedRoute.slug}.`
+          : `Gateway Route API Key requirement disabled for route ${updatedRoute.slug}.`,
+      });
+    }
 
     return this.withPublicPath(updatedRoute);
   }
@@ -433,6 +493,7 @@ export class GatewayRoutesService {
         slug: route.slug,
         method: route.method,
         active: route.active,
+        requiresApiKey: route.requiresApiKey,
       },
       sourceIp: requestContext.sourceIp,
       requestId: requestContext.requestId,

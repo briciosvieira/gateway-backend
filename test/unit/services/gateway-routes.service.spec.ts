@@ -1,4 +1,9 @@
-import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  ForbiddenException,
+  NotFoundException,
+} from '@nestjs/common';
 import { AuditAction, AuditEntity, GatewayHttpMethod } from '../../../generated/prisma/client';
 import { GatewayRoutesService } from '../../../src/modules/gateway-routes/gateway-routes.service';
 import type { AuditLogsService } from '../../../src/modules/audit-logs/audit-logs.service';
@@ -10,8 +15,12 @@ import { activeClientFixture, inactiveClientFixture } from '../../fixtures/clien
 import {
   activeGatewayRouteFixture,
   inactiveGatewayRouteFixture,
+  noApiKeyGatewayRouteFixture,
 } from '../../fixtures/gateway-routes.fixture';
-import { authenticatedAdminFixture } from '../../fixtures/users.fixture';
+import {
+  authenticatedAdminFixture,
+  authenticatedOperatorFixture,
+} from '../../fixtures/users.fixture';
 import {
   createMockPrismaService,
   mockTransactionArray,
@@ -112,6 +121,56 @@ describe('GatewayRoutesService', () => {
       await expect(
         service.create(authenticatedAdminFixture, requestContext, createDto),
       ).rejects.toThrow(ConflictException);
+    });
+
+    it('creates the gateway route with requiresApiKey=true by default when not provided', async () => {
+      prisma.client.findUnique.mockResolvedValue(activeClientFixture);
+      prisma.gatewayRoute.findUnique.mockResolvedValue(null);
+      prisma.gatewayRoute.create.mockResolvedValue(activeGatewayRouteFixture);
+
+      await service.create(authenticatedAdminFixture, requestContext, createDto);
+
+      expect(prisma.gatewayRoute.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ requiresApiKey: true }),
+        }),
+      );
+    });
+
+    it('allows ADMIN to create a gateway route with requiresApiKey=false', async () => {
+      prisma.client.findUnique.mockResolvedValue(activeClientFixture);
+      prisma.gatewayRoute.findUnique.mockResolvedValue(null);
+      prisma.gatewayRoute.create.mockResolvedValue(noApiKeyGatewayRouteFixture);
+
+      const result = await service.create(authenticatedAdminFixture, requestContext, {
+        ...createDto,
+        requiresApiKey: false,
+      });
+
+      expect(result.requiresApiKey).toBe(false);
+      expect(prisma.gatewayRoute.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ requiresApiKey: false }),
+        }),
+      );
+      expect(auditLogsService.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          newValue: expect.objectContaining({ requiresApiKey: false }),
+        }),
+      );
+    });
+
+    it('throws ForbiddenException when an OPERATOR tries to create a route with requiresApiKey=false', async () => {
+      prisma.client.findUnique.mockResolvedValue(activeClientFixture);
+
+      await expect(
+        service.create(authenticatedOperatorFixture, requestContext, {
+          ...createDto,
+          requiresApiKey: false,
+        }),
+      ).rejects.toThrow(ForbiddenException);
+
+      expect(prisma.gatewayRoute.create).not.toHaveBeenCalled();
     });
   });
 
@@ -321,6 +380,108 @@ describe('GatewayRoutesService', () => {
         service.update(authenticatedAdminFixture, requestContext, 'missing', { name: 'x' }),
       ).rejects.toThrow(NotFoundException);
     });
+
+    it('allows ADMIN to change requiresApiKey from true to false and records a dedicated audit log', async () => {
+      prisma.gatewayRoute.findUnique.mockResolvedValue(activeGatewayRouteFixture);
+      prisma.gatewayRoute.update.mockResolvedValue({
+        ...activeGatewayRouteFixture,
+        requiresApiKey: false,
+      });
+
+      const result = await service.update(
+        authenticatedAdminFixture,
+        requestContext,
+        activeGatewayRouteFixture.id,
+        { requiresApiKey: false },
+      );
+
+      expect(result.requiresApiKey).toBe(false);
+      expect(auditLogsService.create).toHaveBeenCalledTimes(2);
+      expect(auditLogsService.create).toHaveBeenNthCalledWith(
+        2,
+        expect.objectContaining({
+          description: expect.stringContaining('API Key requirement disabled'),
+          previousValue: expect.objectContaining({ requiresApiKey: true }),
+          newValue: expect.objectContaining({ requiresApiKey: false }),
+        }),
+      );
+    });
+
+    it('allows ADMIN to change requiresApiKey from false to true and records a dedicated audit log', async () => {
+      prisma.gatewayRoute.findUnique.mockResolvedValue(noApiKeyGatewayRouteFixture);
+      prisma.gatewayRoute.update.mockResolvedValue({
+        ...noApiKeyGatewayRouteFixture,
+        requiresApiKey: true,
+      });
+
+      const result = await service.update(
+        authenticatedAdminFixture,
+        requestContext,
+        noApiKeyGatewayRouteFixture.id,
+        { requiresApiKey: true },
+      );
+
+      expect(result.requiresApiKey).toBe(true);
+      expect(auditLogsService.create).toHaveBeenNthCalledWith(
+        2,
+        expect.objectContaining({
+          description: expect.stringContaining('API Key requirement enabled'),
+          previousValue: expect.objectContaining({ requiresApiKey: false }),
+          newValue: expect.objectContaining({ requiresApiKey: true }),
+        }),
+      );
+    });
+
+    it('throws ForbiddenException when an OPERATOR tries to change requiresApiKey from true to false', async () => {
+      prisma.gatewayRoute.findUnique.mockResolvedValue(activeGatewayRouteFixture);
+
+      await expect(
+        service.update(
+          authenticatedOperatorFixture,
+          requestContext,
+          activeGatewayRouteFixture.id,
+          { requiresApiKey: false },
+        ),
+      ).rejects.toThrow(ForbiddenException);
+
+      expect(prisma.gatewayRoute.update).not.toHaveBeenCalled();
+    });
+
+    it('does not require ADMIN when an OPERATOR updates other fields without touching requiresApiKey', async () => {
+      prisma.gatewayRoute.findUnique.mockResolvedValue(noApiKeyGatewayRouteFixture);
+      prisma.gatewayRoute.update.mockResolvedValue({
+        ...noApiKeyGatewayRouteFixture,
+        name: 'Renamed by operator',
+      });
+
+      const result = await service.update(
+        authenticatedOperatorFixture,
+        requestContext,
+        noApiKeyGatewayRouteFixture.id,
+        { name: 'Renamed by operator' },
+      );
+
+      expect(result.name).toBe('Renamed by operator');
+      expect(prisma.gatewayRoute.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.not.objectContaining({ requiresApiKey: expect.anything() }),
+        }),
+      );
+    });
+
+    it('does not throw when a non-ADMIN sends requiresApiKey equal to the current value', async () => {
+      prisma.gatewayRoute.findUnique.mockResolvedValue(activeGatewayRouteFixture);
+      prisma.gatewayRoute.update.mockResolvedValue(activeGatewayRouteFixture);
+
+      await expect(
+        service.update(
+          authenticatedOperatorFixture,
+          requestContext,
+          activeGatewayRouteFixture.id,
+          { requiresApiKey: true },
+        ),
+      ).resolves.toBeDefined();
+    });
   });
 
   describe('changeStatus', () => {
@@ -439,6 +600,7 @@ describe('GatewayRoutesService', () => {
             slug: activeGatewayRouteFixture.slug,
             method: activeGatewayRouteFixture.method,
             active: activeGatewayRouteFixture.active,
+            requiresApiKey: activeGatewayRouteFixture.requiresApiKey,
           },
         }),
       );

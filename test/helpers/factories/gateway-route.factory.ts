@@ -11,6 +11,7 @@ export interface TestGatewayRouteFactoryOptions {
   active?: boolean;
   timeoutMs?: number;
   retryCount?: number;
+  requiresApiKey?: boolean;
 }
 
 /** Creates a real, persisted GatewayRoute for a client. */
@@ -32,6 +33,7 @@ export async function createTestGatewayRoute(
       active: options.active ?? true,
       timeoutMs: options.timeoutMs ?? 5000,
       retryCount: options.retryCount ?? 0,
+      requiresApiKey: options.requiresApiKey ?? true,
     },
   });
 }

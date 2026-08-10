@@ -6,7 +6,11 @@ import { isIP } from 'node:net';
 import type { FastifyRequest } from 'fastify';
 import { errors as undiciErrors, request as undiciRequest } from 'undici';
 import type { Dispatcher } from 'undici';
-import { RequestLogResult, RequestOrigin } from '../../../generated/prisma/client';
+import {
+  RequestLogAuthenticationMode,
+  RequestLogResult,
+  RequestOrigin,
+} from '../../../generated/prisma/client';
 import { PrismaService } from '../../database/prisma/prisma.service';
 import { hashApiKey } from '../api-keys/utils/api-key.util';
 import type { CreateRequestLogInput } from '../request-logs/interfaces/create-request-log.interface';
@@ -69,6 +73,7 @@ interface RequestLogResolution {
   destinationHost: string | null;
   destinationUrl: string | null;
   destinationIp: string | null;
+  authenticationMode: RequestLogAuthenticationMode;
 }
 
 interface GatewayRequestBase {
@@ -91,6 +96,7 @@ const gatewayRouteSelect = {
   timeoutMs: true,
   retryCount: true,
   active: true,
+  requiresApiKey: true,
   clientId: true,
 } as const;
 
@@ -135,6 +141,7 @@ export class GatewayProxyService {
       destinationHost: null,
       destinationUrl: null,
       destinationIp: null,
+      authenticationMode: RequestLogAuthenticationMode.API_KEY,
     };
 
     const result = await this.resolveAndForward(request, incomingUrl, base, resolution);
@@ -170,6 +177,9 @@ export class GatewayProxyService {
 
     resolution.gatewayRouteId = route.id;
     resolution.clientId = route.clientId;
+    resolution.authenticationMode = route.requiresApiKey
+      ? RequestLogAuthenticationMode.API_KEY
+      : RequestLogAuthenticationMode.NONE;
 
     if (route.method !== method) {
       return this.sendGatewayError(
@@ -192,18 +202,33 @@ export class GatewayProxyService {
 
     const rawApiKey = this.extractApiKey(request);
 
-    if (!rawApiKey) {
-      return this.sendGatewayError('API_KEY_REQUIRED', 401, 'API Key was not provided.');
-    }
+    if (route.requiresApiKey) {
+      if (!rawApiKey) {
+        return this.sendGatewayError('API_KEY_REQUIRED', 401, 'API Key was not provided.');
+      }
 
-    const apiKey = await this.validateApiKey(rawApiKey, route.clientId, resolution);
+      const apiKey = await this.validateApiKey(rawApiKey, route.clientId, resolution);
 
-    if (!apiKey) {
-      return this.sendGatewayError(
-        'INVALID_API_KEY',
-        401,
-        'API Key is invalid, expired or revoked.',
-      );
+      if (!apiKey) {
+        return this.sendGatewayError(
+          'INVALID_API_KEY',
+          401,
+          'API Key is invalid, expired or revoked.',
+        );
+      }
+    } else if (rawApiKey) {
+      // requiresApiKey=false does not make the header mandatory, but a caller who still sends
+      // one is asserting a credential — validating it (instead of silently ignoring it) avoids
+      // masking an invalid/revoked key as if it had been accepted.
+      const apiKey = await this.validateApiKey(rawApiKey, route.clientId, resolution);
+
+      if (!apiKey) {
+        return this.sendGatewayError(
+          'INVALID_API_KEY',
+          401,
+          'API Key is invalid, expired or revoked.',
+        );
+      }
     }
 
     const isIpAllowed = await this.validateAllowedIp(sourceIp, route.clientId);
@@ -307,6 +332,7 @@ export class GatewayProxyService {
       clientId: resolution.clientId,
       apiKeyId: resolution.apiKeyId,
       gatewayRouteId: resolution.gatewayRouteId,
+      authenticationMode: resolution.authenticationMode,
       sourceIp: base.sourceIp,
       publicEndpoint: base.publicEndpoint,
       destinationHost: resolution.destinationHost,

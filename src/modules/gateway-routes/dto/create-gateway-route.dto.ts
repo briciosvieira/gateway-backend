@@ -1,5 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
+  IsBoolean,
   IsEnum,
   IsInt,
   IsNotEmpty,
@@ -88,4 +89,14 @@ export class CreateGatewayRouteDto {
   @Min(0)
   @Max(5)
   retryCount?: number = 0;
+
+  @ApiPropertyOptional({
+    example: true,
+    default: true,
+    description:
+      'Whether this route requires the X-API-Key header. Defaults to true. Only ADMIN can set this to false.',
+  })
+  @IsOptional()
+  @IsBoolean()
+  requiresApiKey?: boolean = true;
 }

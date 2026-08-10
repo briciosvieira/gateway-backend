@@ -1547,6 +1547,7 @@ export const GatewayRouteScalarFieldEnum = {
   timeoutMs: 'timeoutMs',
   retryCount: 'retryCount',
   active: 'active',
+  requiresApiKey: 'requiresApiKey',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -1589,6 +1590,7 @@ export const RequestLogScalarFieldEnum = {
   durationMs: 'durationMs',
   attempts: 'attempts',
   result: 'result',
+  authenticationMode: 'authenticationMode',
   errorCode: 'errorCode',
   errorMessage: 'errorMessage',
   requestHeaders: 'requestHeaders',
@@ -1867,6 +1869,20 @@ export type EnumRequestLogResultFieldRefInput<$PrismaModel> = FieldRefInputType<
  * Reference to a field of type 'RequestLogResult[]'
  */
 export type ListEnumRequestLogResultFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'RequestLogResult[]'>
+    
+
+
+/**
+ * Reference to a field of type 'RequestLogAuthenticationMode'
+ */
+export type EnumRequestLogAuthenticationModeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'RequestLogAuthenticationMode'>
+    
+
+
+/**
+ * Reference to a field of type 'RequestLogAuthenticationMode[]'
+ */
+export type ListEnumRequestLogAuthenticationModeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'RequestLogAuthenticationMode[]'>
     
 
 

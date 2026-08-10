@@ -65,6 +65,7 @@ export type RequestLogMinAggregateOutputType = {
   durationMs: number | null
   attempts: number | null
   result: $Enums.RequestLogResult | null
+  authenticationMode: $Enums.RequestLogAuthenticationMode | null
   errorCode: string | null
   errorMessage: string | null
   requestSizeBytes: number | null
@@ -93,6 +94,7 @@ export type RequestLogMaxAggregateOutputType = {
   durationMs: number | null
   attempts: number | null
   result: $Enums.RequestLogResult | null
+  authenticationMode: $Enums.RequestLogAuthenticationMode | null
   errorCode: string | null
   errorMessage: string | null
   requestSizeBytes: number | null
@@ -121,6 +123,7 @@ export type RequestLogCountAggregateOutputType = {
   durationMs: number
   attempts: number
   result: number
+  authenticationMode: number
   errorCode: number
   errorMessage: number
   requestHeaders: number
@@ -174,6 +177,7 @@ export type RequestLogMinAggregateInputType = {
   durationMs?: true
   attempts?: true
   result?: true
+  authenticationMode?: true
   errorCode?: true
   errorMessage?: true
   requestSizeBytes?: true
@@ -202,6 +206,7 @@ export type RequestLogMaxAggregateInputType = {
   durationMs?: true
   attempts?: true
   result?: true
+  authenticationMode?: true
   errorCode?: true
   errorMessage?: true
   requestSizeBytes?: true
@@ -230,6 +235,7 @@ export type RequestLogCountAggregateInputType = {
   durationMs?: true
   attempts?: true
   result?: true
+  authenticationMode?: true
   errorCode?: true
   errorMessage?: true
   requestHeaders?: true
@@ -350,6 +356,7 @@ export type RequestLogGroupByOutputType = {
   durationMs: number
   attempts: number
   result: $Enums.RequestLogResult
+  authenticationMode: $Enums.RequestLogAuthenticationMode
   errorCode: string | null
   errorMessage: string | null
   requestHeaders: runtime.JsonValue | null
@@ -406,6 +413,7 @@ export type RequestLogWhereInput = {
   durationMs?: Prisma.IntFilter<"RequestLog"> | number
   attempts?: Prisma.IntFilter<"RequestLog"> | number
   result?: Prisma.EnumRequestLogResultFilter<"RequestLog"> | $Enums.RequestLogResult
+  authenticationMode?: Prisma.EnumRequestLogAuthenticationModeFilter<"RequestLog"> | $Enums.RequestLogAuthenticationMode
   errorCode?: Prisma.StringNullableFilter<"RequestLog"> | string | null
   errorMessage?: Prisma.StringNullableFilter<"RequestLog"> | string | null
   requestHeaders?: Prisma.JsonNullableFilter<"RequestLog">
@@ -442,6 +450,7 @@ export type RequestLogOrderByWithRelationInput = {
   durationMs?: Prisma.SortOrder
   attempts?: Prisma.SortOrder
   result?: Prisma.SortOrder
+  authenticationMode?: Prisma.SortOrder
   errorCode?: Prisma.SortOrderInput | Prisma.SortOrder
   errorMessage?: Prisma.SortOrderInput | Prisma.SortOrder
   requestHeaders?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -481,6 +490,7 @@ export type RequestLogWhereUniqueInput = Prisma.AtLeast<{
   durationMs?: Prisma.IntFilter<"RequestLog"> | number
   attempts?: Prisma.IntFilter<"RequestLog"> | number
   result?: Prisma.EnumRequestLogResultFilter<"RequestLog"> | $Enums.RequestLogResult
+  authenticationMode?: Prisma.EnumRequestLogAuthenticationModeFilter<"RequestLog"> | $Enums.RequestLogAuthenticationMode
   errorCode?: Prisma.StringNullableFilter<"RequestLog"> | string | null
   errorMessage?: Prisma.StringNullableFilter<"RequestLog"> | string | null
   requestHeaders?: Prisma.JsonNullableFilter<"RequestLog">
@@ -517,6 +527,7 @@ export type RequestLogOrderByWithAggregationInput = {
   durationMs?: Prisma.SortOrder
   attempts?: Prisma.SortOrder
   result?: Prisma.SortOrder
+  authenticationMode?: Prisma.SortOrder
   errorCode?: Prisma.SortOrderInput | Prisma.SortOrder
   errorMessage?: Prisma.SortOrderInput | Prisma.SortOrder
   requestHeaders?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -558,6 +569,7 @@ export type RequestLogScalarWhereWithAggregatesInput = {
   durationMs?: Prisma.IntWithAggregatesFilter<"RequestLog"> | number
   attempts?: Prisma.IntWithAggregatesFilter<"RequestLog"> | number
   result?: Prisma.EnumRequestLogResultWithAggregatesFilter<"RequestLog"> | $Enums.RequestLogResult
+  authenticationMode?: Prisma.EnumRequestLogAuthenticationModeWithAggregatesFilter<"RequestLog"> | $Enums.RequestLogAuthenticationMode
   errorCode?: Prisma.StringNullableWithAggregatesFilter<"RequestLog"> | string | null
   errorMessage?: Prisma.StringNullableWithAggregatesFilter<"RequestLog"> | string | null
   requestHeaders?: Prisma.JsonNullableWithAggregatesFilter<"RequestLog">
@@ -588,6 +600,7 @@ export type RequestLogCreateInput = {
   durationMs: number
   attempts?: number
   result: $Enums.RequestLogResult
+  authenticationMode?: $Enums.RequestLogAuthenticationMode
   errorCode?: string | null
   errorMessage?: string | null
   requestHeaders?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -624,6 +637,7 @@ export type RequestLogUncheckedCreateInput = {
   durationMs: number
   attempts?: number
   result: $Enums.RequestLogResult
+  authenticationMode?: $Enums.RequestLogAuthenticationMode
   errorCode?: string | null
   errorMessage?: string | null
   requestHeaders?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -654,6 +668,7 @@ export type RequestLogUpdateInput = {
   durationMs?: Prisma.IntFieldUpdateOperationsInput | number
   attempts?: Prisma.IntFieldUpdateOperationsInput | number
   result?: Prisma.EnumRequestLogResultFieldUpdateOperationsInput | $Enums.RequestLogResult
+  authenticationMode?: Prisma.EnumRequestLogAuthenticationModeFieldUpdateOperationsInput | $Enums.RequestLogAuthenticationMode
   errorCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   errorMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   requestHeaders?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -690,6 +705,7 @@ export type RequestLogUncheckedUpdateInput = {
   durationMs?: Prisma.IntFieldUpdateOperationsInput | number
   attempts?: Prisma.IntFieldUpdateOperationsInput | number
   result?: Prisma.EnumRequestLogResultFieldUpdateOperationsInput | $Enums.RequestLogResult
+  authenticationMode?: Prisma.EnumRequestLogAuthenticationModeFieldUpdateOperationsInput | $Enums.RequestLogAuthenticationMode
   errorCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   errorMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   requestHeaders?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -723,6 +739,7 @@ export type RequestLogCreateManyInput = {
   durationMs: number
   attempts?: number
   result: $Enums.RequestLogResult
+  authenticationMode?: $Enums.RequestLogAuthenticationMode
   errorCode?: string | null
   errorMessage?: string | null
   requestHeaders?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -753,6 +770,7 @@ export type RequestLogUpdateManyMutationInput = {
   durationMs?: Prisma.IntFieldUpdateOperationsInput | number
   attempts?: Prisma.IntFieldUpdateOperationsInput | number
   result?: Prisma.EnumRequestLogResultFieldUpdateOperationsInput | $Enums.RequestLogResult
+  authenticationMode?: Prisma.EnumRequestLogAuthenticationModeFieldUpdateOperationsInput | $Enums.RequestLogAuthenticationMode
   errorCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   errorMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   requestHeaders?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -786,6 +804,7 @@ export type RequestLogUncheckedUpdateManyInput = {
   durationMs?: Prisma.IntFieldUpdateOperationsInput | number
   attempts?: Prisma.IntFieldUpdateOperationsInput | number
   result?: Prisma.EnumRequestLogResultFieldUpdateOperationsInput | $Enums.RequestLogResult
+  authenticationMode?: Prisma.EnumRequestLogAuthenticationModeFieldUpdateOperationsInput | $Enums.RequestLogAuthenticationMode
   errorCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   errorMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   requestHeaders?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -829,6 +848,7 @@ export type RequestLogCountOrderByAggregateInput = {
   durationMs?: Prisma.SortOrder
   attempts?: Prisma.SortOrder
   result?: Prisma.SortOrder
+  authenticationMode?: Prisma.SortOrder
   errorCode?: Prisma.SortOrder
   errorMessage?: Prisma.SortOrder
   requestHeaders?: Prisma.SortOrder
@@ -871,6 +891,7 @@ export type RequestLogMaxOrderByAggregateInput = {
   durationMs?: Prisma.SortOrder
   attempts?: Prisma.SortOrder
   result?: Prisma.SortOrder
+  authenticationMode?: Prisma.SortOrder
   errorCode?: Prisma.SortOrder
   errorMessage?: Prisma.SortOrder
   requestSizeBytes?: Prisma.SortOrder
@@ -899,6 +920,7 @@ export type RequestLogMinOrderByAggregateInput = {
   durationMs?: Prisma.SortOrder
   attempts?: Prisma.SortOrder
   result?: Prisma.SortOrder
+  authenticationMode?: Prisma.SortOrder
   errorCode?: Prisma.SortOrder
   errorMessage?: Prisma.SortOrder
   requestSizeBytes?: Prisma.SortOrder
@@ -1057,6 +1079,10 @@ export type EnumRequestLogResultFieldUpdateOperationsInput = {
   set?: $Enums.RequestLogResult
 }
 
+export type EnumRequestLogAuthenticationModeFieldUpdateOperationsInput = {
+  set?: $Enums.RequestLogAuthenticationMode
+}
+
 export type RequestLogCreateWithoutClientInput = {
   id?: string
   requestId: string
@@ -1075,6 +1101,7 @@ export type RequestLogCreateWithoutClientInput = {
   durationMs: number
   attempts?: number
   result: $Enums.RequestLogResult
+  authenticationMode?: $Enums.RequestLogAuthenticationMode
   errorCode?: string | null
   errorMessage?: string | null
   requestHeaders?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -1109,6 +1136,7 @@ export type RequestLogUncheckedCreateWithoutClientInput = {
   durationMs: number
   attempts?: number
   result: $Enums.RequestLogResult
+  authenticationMode?: $Enums.RequestLogAuthenticationMode
   errorCode?: string | null
   errorMessage?: string | null
   requestHeaders?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -1171,6 +1199,7 @@ export type RequestLogScalarWhereInput = {
   durationMs?: Prisma.IntFilter<"RequestLog"> | number
   attempts?: Prisma.IntFilter<"RequestLog"> | number
   result?: Prisma.EnumRequestLogResultFilter<"RequestLog"> | $Enums.RequestLogResult
+  authenticationMode?: Prisma.EnumRequestLogAuthenticationModeFilter<"RequestLog"> | $Enums.RequestLogAuthenticationMode
   errorCode?: Prisma.StringNullableFilter<"RequestLog"> | string | null
   errorMessage?: Prisma.StringNullableFilter<"RequestLog"> | string | null
   requestHeaders?: Prisma.JsonNullableFilter<"RequestLog">
@@ -1201,6 +1230,7 @@ export type RequestLogCreateWithoutApiKeyInput = {
   durationMs: number
   attempts?: number
   result: $Enums.RequestLogResult
+  authenticationMode?: $Enums.RequestLogAuthenticationMode
   errorCode?: string | null
   errorMessage?: string | null
   requestHeaders?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -1235,6 +1265,7 @@ export type RequestLogUncheckedCreateWithoutApiKeyInput = {
   durationMs: number
   attempts?: number
   result: $Enums.RequestLogResult
+  authenticationMode?: $Enums.RequestLogAuthenticationMode
   errorCode?: string | null
   errorMessage?: string | null
   requestHeaders?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -1291,6 +1322,7 @@ export type RequestLogCreateWithoutGatewayRouteInput = {
   durationMs: number
   attempts?: number
   result: $Enums.RequestLogResult
+  authenticationMode?: $Enums.RequestLogAuthenticationMode
   errorCode?: string | null
   errorMessage?: string | null
   requestHeaders?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -1325,6 +1357,7 @@ export type RequestLogUncheckedCreateWithoutGatewayRouteInput = {
   durationMs: number
   attempts?: number
   result: $Enums.RequestLogResult
+  authenticationMode?: $Enums.RequestLogAuthenticationMode
   errorCode?: string | null
   errorMessage?: string | null
   requestHeaders?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -1383,6 +1416,7 @@ export type RequestLogCreateManyClientInput = {
   durationMs: number
   attempts?: number
   result: $Enums.RequestLogResult
+  authenticationMode?: $Enums.RequestLogAuthenticationMode
   errorCode?: string | null
   errorMessage?: string | null
   requestHeaders?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -1413,6 +1447,7 @@ export type RequestLogUpdateWithoutClientInput = {
   durationMs?: Prisma.IntFieldUpdateOperationsInput | number
   attempts?: Prisma.IntFieldUpdateOperationsInput | number
   result?: Prisma.EnumRequestLogResultFieldUpdateOperationsInput | $Enums.RequestLogResult
+  authenticationMode?: Prisma.EnumRequestLogAuthenticationModeFieldUpdateOperationsInput | $Enums.RequestLogAuthenticationMode
   errorCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   errorMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   requestHeaders?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -1447,6 +1482,7 @@ export type RequestLogUncheckedUpdateWithoutClientInput = {
   durationMs?: Prisma.IntFieldUpdateOperationsInput | number
   attempts?: Prisma.IntFieldUpdateOperationsInput | number
   result?: Prisma.EnumRequestLogResultFieldUpdateOperationsInput | $Enums.RequestLogResult
+  authenticationMode?: Prisma.EnumRequestLogAuthenticationModeFieldUpdateOperationsInput | $Enums.RequestLogAuthenticationMode
   errorCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   errorMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   requestHeaders?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -1479,6 +1515,7 @@ export type RequestLogUncheckedUpdateManyWithoutClientInput = {
   durationMs?: Prisma.IntFieldUpdateOperationsInput | number
   attempts?: Prisma.IntFieldUpdateOperationsInput | number
   result?: Prisma.EnumRequestLogResultFieldUpdateOperationsInput | $Enums.RequestLogResult
+  authenticationMode?: Prisma.EnumRequestLogAuthenticationModeFieldUpdateOperationsInput | $Enums.RequestLogAuthenticationMode
   errorCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   errorMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   requestHeaders?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -1511,6 +1548,7 @@ export type RequestLogCreateManyApiKeyInput = {
   durationMs: number
   attempts?: number
   result: $Enums.RequestLogResult
+  authenticationMode?: $Enums.RequestLogAuthenticationMode
   errorCode?: string | null
   errorMessage?: string | null
   requestHeaders?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -1541,6 +1579,7 @@ export type RequestLogUpdateWithoutApiKeyInput = {
   durationMs?: Prisma.IntFieldUpdateOperationsInput | number
   attempts?: Prisma.IntFieldUpdateOperationsInput | number
   result?: Prisma.EnumRequestLogResultFieldUpdateOperationsInput | $Enums.RequestLogResult
+  authenticationMode?: Prisma.EnumRequestLogAuthenticationModeFieldUpdateOperationsInput | $Enums.RequestLogAuthenticationMode
   errorCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   errorMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   requestHeaders?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -1575,6 +1614,7 @@ export type RequestLogUncheckedUpdateWithoutApiKeyInput = {
   durationMs?: Prisma.IntFieldUpdateOperationsInput | number
   attempts?: Prisma.IntFieldUpdateOperationsInput | number
   result?: Prisma.EnumRequestLogResultFieldUpdateOperationsInput | $Enums.RequestLogResult
+  authenticationMode?: Prisma.EnumRequestLogAuthenticationModeFieldUpdateOperationsInput | $Enums.RequestLogAuthenticationMode
   errorCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   errorMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   requestHeaders?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -1607,6 +1647,7 @@ export type RequestLogUncheckedUpdateManyWithoutApiKeyInput = {
   durationMs?: Prisma.IntFieldUpdateOperationsInput | number
   attempts?: Prisma.IntFieldUpdateOperationsInput | number
   result?: Prisma.EnumRequestLogResultFieldUpdateOperationsInput | $Enums.RequestLogResult
+  authenticationMode?: Prisma.EnumRequestLogAuthenticationModeFieldUpdateOperationsInput | $Enums.RequestLogAuthenticationMode
   errorCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   errorMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   requestHeaders?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -1639,6 +1680,7 @@ export type RequestLogCreateManyGatewayRouteInput = {
   durationMs: number
   attempts?: number
   result: $Enums.RequestLogResult
+  authenticationMode?: $Enums.RequestLogAuthenticationMode
   errorCode?: string | null
   errorMessage?: string | null
   requestHeaders?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -1669,6 +1711,7 @@ export type RequestLogUpdateWithoutGatewayRouteInput = {
   durationMs?: Prisma.IntFieldUpdateOperationsInput | number
   attempts?: Prisma.IntFieldUpdateOperationsInput | number
   result?: Prisma.EnumRequestLogResultFieldUpdateOperationsInput | $Enums.RequestLogResult
+  authenticationMode?: Prisma.EnumRequestLogAuthenticationModeFieldUpdateOperationsInput | $Enums.RequestLogAuthenticationMode
   errorCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   errorMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   requestHeaders?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -1703,6 +1746,7 @@ export type RequestLogUncheckedUpdateWithoutGatewayRouteInput = {
   durationMs?: Prisma.IntFieldUpdateOperationsInput | number
   attempts?: Prisma.IntFieldUpdateOperationsInput | number
   result?: Prisma.EnumRequestLogResultFieldUpdateOperationsInput | $Enums.RequestLogResult
+  authenticationMode?: Prisma.EnumRequestLogAuthenticationModeFieldUpdateOperationsInput | $Enums.RequestLogAuthenticationMode
   errorCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   errorMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   requestHeaders?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -1735,6 +1779,7 @@ export type RequestLogUncheckedUpdateManyWithoutGatewayRouteInput = {
   durationMs?: Prisma.IntFieldUpdateOperationsInput | number
   attempts?: Prisma.IntFieldUpdateOperationsInput | number
   result?: Prisma.EnumRequestLogResultFieldUpdateOperationsInput | $Enums.RequestLogResult
+  authenticationMode?: Prisma.EnumRequestLogAuthenticationModeFieldUpdateOperationsInput | $Enums.RequestLogAuthenticationMode
   errorCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   errorMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   requestHeaders?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -1770,6 +1815,7 @@ export type RequestLogSelect<ExtArgs extends runtime.Types.Extensions.InternalAr
   durationMs?: boolean
   attempts?: boolean
   result?: boolean
+  authenticationMode?: boolean
   errorCode?: boolean
   errorMessage?: boolean
   requestHeaders?: boolean
@@ -1806,6 +1852,7 @@ export type RequestLogSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Ex
   durationMs?: boolean
   attempts?: boolean
   result?: boolean
+  authenticationMode?: boolean
   errorCode?: boolean
   errorMessage?: boolean
   requestHeaders?: boolean
@@ -1842,6 +1889,7 @@ export type RequestLogSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Ex
   durationMs?: boolean
   attempts?: boolean
   result?: boolean
+  authenticationMode?: boolean
   errorCode?: boolean
   errorMessage?: boolean
   requestHeaders?: boolean
@@ -1878,6 +1926,7 @@ export type RequestLogSelectScalar = {
   durationMs?: boolean
   attempts?: boolean
   result?: boolean
+  authenticationMode?: boolean
   errorCode?: boolean
   errorMessage?: boolean
   requestHeaders?: boolean
@@ -1890,7 +1939,7 @@ export type RequestLogSelectScalar = {
   createdAt?: boolean
 }
 
-export type RequestLogOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "requestId" | "attemptedAt" | "requestOrigin" | "sourceHost" | "clientId" | "apiKeyId" | "gatewayRouteId" | "sourceIp" | "method" | "publicPath" | "publicEndpoint" | "destinationHost" | "destinationUrl" | "destinationIp" | "statusCode" | "upstreamStatusCode" | "durationMs" | "attempts" | "result" | "errorCode" | "errorMessage" | "requestHeaders" | "requestQuery" | "requestBody" | "responseHeaders" | "responseBody" | "requestSizeBytes" | "responseSizeBytes" | "createdAt", ExtArgs["result"]["requestLog"]>
+export type RequestLogOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "requestId" | "attemptedAt" | "requestOrigin" | "sourceHost" | "clientId" | "apiKeyId" | "gatewayRouteId" | "sourceIp" | "method" | "publicPath" | "publicEndpoint" | "destinationHost" | "destinationUrl" | "destinationIp" | "statusCode" | "upstreamStatusCode" | "durationMs" | "attempts" | "result" | "authenticationMode" | "errorCode" | "errorMessage" | "requestHeaders" | "requestQuery" | "requestBody" | "responseHeaders" | "responseBody" | "requestSizeBytes" | "responseSizeBytes" | "createdAt", ExtArgs["result"]["requestLog"]>
 export type RequestLogInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   client?: boolean | Prisma.RequestLog$clientArgs<ExtArgs>
   apiKey?: boolean | Prisma.RequestLog$apiKeyArgs<ExtArgs>
@@ -1935,6 +1984,7 @@ export type $RequestLogPayload<ExtArgs extends runtime.Types.Extensions.Internal
     durationMs: number
     attempts: number
     result: $Enums.RequestLogResult
+    authenticationMode: $Enums.RequestLogAuthenticationMode
     errorCode: string | null
     errorMessage: string | null
     requestHeaders: runtime.JsonValue | null
@@ -2391,6 +2441,7 @@ export interface RequestLogFieldRefs {
   readonly durationMs: Prisma.FieldRef<"RequestLog", 'Int'>
   readonly attempts: Prisma.FieldRef<"RequestLog", 'Int'>
   readonly result: Prisma.FieldRef<"RequestLog", 'RequestLogResult'>
+  readonly authenticationMode: Prisma.FieldRef<"RequestLog", 'RequestLogAuthenticationMode'>
   readonly errorCode: Prisma.FieldRef<"RequestLog", 'String'>
   readonly errorMessage: Prisma.FieldRef<"RequestLog", 'String'>
   readonly requestHeaders: Prisma.FieldRef<"RequestLog", 'Json'>

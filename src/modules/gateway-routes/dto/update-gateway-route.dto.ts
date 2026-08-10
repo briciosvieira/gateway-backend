@@ -1,5 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import {
+  IsBoolean,
   IsEnum,
   IsInt,
   IsOptional,
@@ -76,4 +77,13 @@ export class UpdateGatewayRouteDto {
   @Min(0)
   @Max(5)
   retryCount?: number;
+
+  @ApiPropertyOptional({
+    example: false,
+    description:
+      'Whether this route requires the X-API-Key header. Only ADMIN can change this value.',
+  })
+  @IsOptional()
+  @IsBoolean()
+  requiresApiKey?: boolean;
 }

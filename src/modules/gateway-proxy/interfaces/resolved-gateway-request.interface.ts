@@ -8,6 +8,7 @@ export interface ResolvedGatewayRoute {
   timeoutMs: number;
   retryCount: number;
   active: boolean;
+  requiresApiKey: boolean;
   clientId: string;
 }
 

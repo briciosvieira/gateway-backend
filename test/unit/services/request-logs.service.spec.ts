@@ -1,6 +1,11 @@
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import type { ConfigService } from '@nestjs/config';
-import { Prisma, RequestLogResult, RequestOrigin } from '../../../generated/prisma/client';
+import {
+  Prisma,
+  RequestLogAuthenticationMode,
+  RequestLogResult,
+  RequestOrigin,
+} from '../../../generated/prisma/client';
 import { RequestLogsService } from '../../../src/modules/request-logs/request-logs.service';
 import type { CreateRequestLogInput } from '../../../src/modules/request-logs/interfaces/create-request-log.interface';
 import type { FindRequestLogsQueryDto } from '../../../src/modules/request-logs/dto/find-request-logs-query.dto';
@@ -20,6 +25,7 @@ const requestLogFixture = {
   clientId: 'client-1',
   apiKeyId: 'api-key-1',
   gatewayRouteId: 'route-1',
+  authenticationMode: RequestLogAuthenticationMode.API_KEY,
   sourceIp: '203.0.113.10',
   method: 'GET',
   publicPath: '/v1/orders',
@@ -48,6 +54,7 @@ const baseCreateInput: CreateRequestLogInput = {
   attemptedAt: new Date('2026-08-07T00:42:08.000Z'),
   requestOrigin: RequestOrigin.PUBLIC,
   sourceHost: 'hub.wdcpartners.com.br',
+  authenticationMode: RequestLogAuthenticationMode.API_KEY,
   sourceIp: '203.0.113.10',
   method: 'GET',
   publicPath: '/v1/orders',

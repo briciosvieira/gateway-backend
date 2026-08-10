@@ -80,6 +80,53 @@
 - No PEM download endpoint exists
 - No endpoint returns raw PEM
 
+## Gateway Routes — Optional API Key requirement
+
+- Prisma field: `GatewayRoute.requiresApiKey Boolean @default(true)`
+- Migration: `20260810143920_add_gateway_route_requires_api_key` (additive, backfills existing rows to `true`; also adds `RequestLog.authenticationMode`)
+- Default is always `true`; no existing route was changed to `false` by the migration
+- `requiresApiKey=false` only skips the X-API-Key requirement — every other validation still runs unchanged:
+  - Gateway Route resolution and `active` status
+  - Client `active` status
+  - Allowed IP
+  - Route Headers
+  - TLS / trusted CA validation
+  - timeout / retry / upstream forwarding
+  - Request Logs / Audit Logs
+- There is no global switch — the flag is exclusively per Gateway Route
+
+### Gateway Proxy decision order (`GatewayProxyService.resolveAndForward`)
+
+1. Resolve Gateway Route by slug, require `active`
+2. Validate HTTP method
+3. Validate Client `active`
+4. Read `route.requiresApiKey`:
+   - `true` → X-API-Key is mandatory; missing → `401 API_KEY_REQUIRED`; invalid/expired/revoked/wrong client → `401 INVALID_API_KEY`
+   - `false` → X-API-Key is not required; if the header is absent, continue; **if the header is present anyway, it is still validated** (invalid → `401 INVALID_API_KEY`) — a voluntarily sent key is never silently ignored
+5. Allowed IP (always enforced)
+6. Route Headers (always applied)
+7. Upstream request (always attempted)
+8. Request Log persisted (always)
+
+### Permissions (`GatewayRoutesService`)
+
+- `POST /gateway-routes`: OPERATOR/ADMIN can create; `requiresApiKey: false` is ADMIN-only — non-ADMIN gets `403 { code: 'REQUIRES_API_KEY_ADMIN_ONLY' }`, defaults silently to `true` otherwise
+- `PATCH /gateway-routes/:id`: any *change* to `requiresApiKey` (in either direction) is ADMIN-only — same `403 REQUIRES_API_KEY_ADMIN_ONLY`. Sending the field with its current value, or omitting it entirely, does not require ADMIN and never side-effects the flag
+- Both DTOs (`CreateGatewayRouteDto`, `UpdateGatewayRouteDto`) expose `requiresApiKey?: boolean` via Swagger
+
+### Audit
+
+- The general `CREATE`/`UPDATE` audit entries for a Gateway Route always include `requiresApiKey` in their `newValue`/`previousValue`
+- Additionally, whenever an `UPDATE` actually changes `requiresApiKey`, a **dedicated** `AuditAction.UPDATE` / `AuditEntity.GATEWAY_ROUTE` entry is recorded with `description` = `"Gateway Route API Key requirement enabled/disabled for route <slug>."`, and `previousValue`/`newValue` containing `gatewayRouteId`, `clientId`, `name`, `slug`, `requiresApiKey`
+
+### Request Logs — `authenticationMode`
+
+- New enum `RequestLogAuthenticationMode { API_KEY, NONE }`, field `RequestLog.authenticationMode`, `@default(API_KEY)`, `NOT NULL`, indexed
+- Set from the resolved route's `requiresApiKey` as soon as the route is known (`API_KEY` when `true`, `NONE` when `false`); defaults to `API_KEY` for requests that never resolve a route (e.g. `GATEWAY_ROUTE_NOT_FOUND`), matching the pre-existing (always-required) behavior
+- Distinguishes a valid unauthenticated call (`requiresApiKey=false`, `apiKeyId=null`, `authenticationMode=NONE`, `result=SUCCESS`) from an invalid one on a protected route (`requiresApiKey=true`, `apiKeyId=null`, `authenticationMode=API_KEY`, `errorCode=API_KEY_REQUIRED`)
+- `authenticationMode` reflects the route's policy, not whether a key happened to be sent — a voluntary, valid key on a `requiresApiKey=false` route still logs `authenticationMode=NONE` (with `apiKeyId` populated)
+- `GET /request-logs` accepts an optional `authenticationMode` filter
+
 ## Request Logs
 
 - `RequestLog.attemptedAt` is required and persisted as UTC

@@ -550,4 +550,128 @@ describe('Gateway Proxy (integration)', () => {
       expect(body.code).toBe('UPSTREAM_UNAVAILABLE');
     });
   });
+
+  describe('16. Gateway route with requiresApiKey=false', () => {
+    const clientIds: string[] = [];
+
+    afterAll(async () => {
+      await cleanupClients(db, clientIds);
+    });
+
+    it('reaches the upstream without an X-API-Key header and logs authenticationMode NONE', async () => {
+      const client = await createTestClient(db);
+      clientIds.push(client.id);
+
+      const route = await createTestGatewayRoute(db, client.id, {
+        destinationUrl: `${mockUpstream.url}/scenario-16-no-api-key`,
+        method: GatewayHttpMethod.GET,
+        requiresApiKey: false,
+      });
+      await allowLoopbackAddresses(db, client.id);
+
+      mockUpstream.setRoute('/scenario-16-no-api-key', {
+        statusCode: 200,
+        body: { ok: true },
+      });
+
+      const requestId = `req-scenario-16-${Date.now()}`;
+      const response = await request(app.getHttpServer())
+        .get(`/gateway${route.slug}`)
+        .set('X-Request-ID', requestId);
+
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual({ ok: true });
+
+      const requestLog = await db.prisma.requestLog.findUnique({ where: { requestId } });
+      expect(requestLog).not.toBeNull();
+      expect(requestLog?.apiKeyId).toBeNull();
+      expect(requestLog?.authenticationMode).toBe('NONE');
+      expect(requestLog?.result).toBe('SUCCESS');
+    });
+
+    it('still returns 403 IP_NOT_ALLOWED when the source IP is blocked', async () => {
+      const client = await createTestClient(db);
+      clientIds.push(client.id);
+
+      const route = await createTestGatewayRoute(db, client.id, {
+        destinationUrl: `${mockUpstream.url}/scenario-16-ip-blocked`,
+        method: GatewayHttpMethod.GET,
+        requiresApiKey: false,
+      });
+      // No Allowed IP registered for this client on purpose.
+
+      const response = await request(app.getHttpServer()).get(`/gateway${route.slug}`);
+
+      expect(response.status).toBe(403);
+      const body = response.body as GatewayErrorBody;
+      expect(body.code).toBe('IP_NOT_ALLOWED');
+    });
+
+    it('still returns 403 CLIENT_INACTIVE when the client is inactive', async () => {
+      const client = await createTestClient(db, { active: false });
+      clientIds.push(client.id);
+
+      const route = await createTestGatewayRoute(db, client.id, {
+        destinationUrl: `${mockUpstream.url}/scenario-16-client-inactive`,
+        method: GatewayHttpMethod.GET,
+        requiresApiKey: false,
+      });
+
+      const response = await request(app.getHttpServer()).get(`/gateway${route.slug}`);
+
+      expect(response.status).toBe(403);
+      const body = response.body as GatewayErrorBody;
+      expect(body.code).toBe('CLIENT_INACTIVE');
+    });
+
+    it('validates a voluntarily sent X-API-Key and rejects it if invalid', async () => {
+      const client = await createTestClient(db);
+      clientIds.push(client.id);
+
+      const route = await createTestGatewayRoute(db, client.id, {
+        destinationUrl: `${mockUpstream.url}/scenario-16-invalid-key`,
+        method: GatewayHttpMethod.GET,
+        requiresApiKey: false,
+      });
+      await allowLoopbackAddresses(db, client.id);
+
+      const response = await request(app.getHttpServer())
+        .get(`/gateway${route.slug}`)
+        .set('X-API-Key', 'this-is-not-a-real-api-key');
+
+      expect(response.status).toBe(401);
+      const body = response.body as GatewayErrorBody;
+      expect(body.code).toBe('INVALID_API_KEY');
+    });
+
+    it('validates a voluntarily sent valid X-API-Key and proceeds normally', async () => {
+      const client = await createTestClient(db);
+      clientIds.push(client.id);
+
+      const { fullKey } = await createTestApiKey(db, client.id);
+      const route = await createTestGatewayRoute(db, client.id, {
+        destinationUrl: `${mockUpstream.url}/scenario-16-valid-key`,
+        method: GatewayHttpMethod.GET,
+        requiresApiKey: false,
+      });
+      await allowLoopbackAddresses(db, client.id);
+
+      mockUpstream.setRoute('/scenario-16-valid-key', {
+        statusCode: 200,
+        body: { ok: true },
+      });
+
+      const requestId = `req-scenario-16-valid-key-${Date.now()}`;
+      const response = await request(app.getHttpServer())
+        .get(`/gateway${route.slug}`)
+        .set('X-Request-ID', requestId)
+        .set('X-API-Key', fullKey);
+
+      expect(response.status).toBe(200);
+
+      const requestLog = await db.prisma.requestLog.findUnique({ where: { requestId } });
+      expect(requestLog?.apiKeyId).not.toBeNull();
+      expect(requestLog?.authenticationMode).toBe('NONE');
+    });
+  });
 });

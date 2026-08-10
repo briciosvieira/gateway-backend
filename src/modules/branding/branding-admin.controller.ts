@@ -91,11 +91,11 @@ const buildSuccessEnvelopeSchema = (dataSchema: object) => ({
 @ApiTags('Branding')
 @ApiBearerAuth()
 @Controller('branding')
-@Roles(RoleCode.ADMIN)
 export class BrandingAdminController {
   constructor(private readonly brandingService: BrandingService) {}
 
   @Patch()
+  @Roles(RoleCode.ADMIN, RoleCode.OPERATOR)
   @ApiOperation({ summary: 'Update the global application branding name' })
   @ApiOkResponse({
     description: 'Branding name updated successfully.',
@@ -114,6 +114,7 @@ export class BrandingAdminController {
   }
 
   @Post('logo')
+  @Roles(RoleCode.ADMIN, RoleCode.OPERATOR)
   @ApiOperation({ summary: 'Upload or replace the branding logo' })
   @ApiConsumes('multipart/form-data')
   @ApiBody({ schema: multipartFileSchema })
@@ -133,6 +134,7 @@ export class BrandingAdminController {
   }
 
   @Post('favicon')
+  @Roles(RoleCode.ADMIN, RoleCode.OPERATOR)
   @ApiOperation({ summary: 'Upload or replace the branding favicon' })
   @ApiConsumes('multipart/form-data')
   @ApiBody({ schema: multipartFileSchema })
@@ -152,6 +154,7 @@ export class BrandingAdminController {
   }
 
   @Post('brand-image')
+  @Roles(RoleCode.ADMIN, RoleCode.OPERATOR)
   @ApiOperation({ summary: 'Upload or replace the branding primary image' })
   @ApiConsumes('multipart/form-data')
   @ApiBody({ schema: multipartFileSchema })
@@ -171,6 +174,7 @@ export class BrandingAdminController {
   }
 
   @Delete('logo')
+  @Roles(RoleCode.ADMIN)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Remove the custom branding logo' })
   @ApiOkResponse({
@@ -189,6 +193,7 @@ export class BrandingAdminController {
   }
 
   @Delete('favicon')
+  @Roles(RoleCode.ADMIN)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Remove the custom branding favicon' })
   @ApiOkResponse({
@@ -207,6 +212,7 @@ export class BrandingAdminController {
   }
 
   @Delete('brand-image')
+  @Roles(RoleCode.ADMIN)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Remove the custom branding primary image' })
   @ApiOkResponse({

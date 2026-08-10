@@ -20,7 +20,9 @@ interface BrandingResource {
   updatedAt: string | null;
 }
 
-const pngBuffer = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00]);
+const pngBuffer = Buffer.from([
+  0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00,
+]);
 const jpegBuffer = Buffer.from([0xff, 0xd8, 0xff, 0xdb]);
 const icoBuffer = Buffer.from([0x00, 0x00, 0x01, 0x00, 0x01]);
 const validSvgBuffer = Buffer.from(
@@ -63,10 +65,18 @@ describe('Branding (integration)', () => {
     await db.connect();
     app = await createTestApp();
 
-    const { user: adminUser } = await createTestUser(db, { roleCode: RoleCode.ADMIN });
-    const { user: operatorUser } = await createTestUser(db, { roleCode: RoleCode.OPERATOR });
-    const { user: viewerUser } = await createTestUser(db, { roleCode: RoleCode.VIEWER });
-    const { user: auditorUser } = await createTestUser(db, { roleCode: RoleCode.AUDITOR });
+    const { user: adminUser } = await createTestUser(db, {
+      roleCode: RoleCode.ADMIN,
+    });
+    const { user: operatorUser } = await createTestUser(db, {
+      roleCode: RoleCode.OPERATOR,
+    });
+    const { user: viewerUser } = await createTestUser(db, {
+      roleCode: RoleCode.VIEWER,
+    });
+    const { user: auditorUser } = await createTestUser(db, {
+      roleCode: RoleCode.AUDITOR,
+    });
 
     userIds = [adminUser.id, operatorUser.id, viewerUser.id, auditorUser.id];
 
@@ -136,23 +146,37 @@ describe('Branding (integration)', () => {
       updatedAt: null,
     });
 
-    const assetResponse = await request(app.getHttpServer()).get('/api/v1/branding/assets/logo');
+    const assetResponse = await request(app.getHttpServer()).get(
+      '/api/v1/branding/assets/logo',
+    );
 
     expect(assetResponse.status).toBe(404);
   });
 
-  it('allows only ADMIN to edit branding data', async () => {
+  it('allows ADMIN and OPERATOR to update branding data and upload assets, but not VIEWER/AUDITOR', async () => {
     const adminResponse = await request(app.getHttpServer())
       .patch('/api/v1/branding')
       .set('Authorization', `Bearer ${adminToken}`)
       .send({ applicationName: 'Partner Gateway' });
 
     expect(adminResponse.status).toBe(200);
-    expect((adminResponse.body as ApiResponse<BrandingResource>).data.applicationName).toBe(
-      'Partner Gateway',
-    );
+    expect(
+      (adminResponse.body as ApiResponse<BrandingResource>).data
+        .applicationName,
+    ).toBe('Partner Gateway');
 
-    for (const token of [operatorToken, viewerToken, auditorToken]) {
+    const operatorResponse = await request(app.getHttpServer())
+      .patch('/api/v1/branding')
+      .set('Authorization', `Bearer ${operatorToken}`)
+      .send({ applicationName: 'Operator Gateway' });
+
+    expect(operatorResponse.status).toBe(200);
+    expect(
+      (operatorResponse.body as ApiResponse<BrandingResource>).data
+        .applicationName,
+    ).toBe('Operator Gateway');
+
+    for (const token of [viewerToken, auditorToken]) {
       const forbiddenResponse = await request(app.getHttpServer())
         .patch('/api/v1/branding')
         .set('Authorization', `Bearer ${token}`)
@@ -161,7 +185,7 @@ describe('Branding (integration)', () => {
       expect(forbiddenResponse.status).toBe(403);
     }
 
-    const forbiddenUploadResponse = await uploadBrandingAsset(
+    const operatorUploadResponse = await uploadBrandingAsset(
       app,
       operatorToken,
       'logo',
@@ -170,7 +194,46 @@ describe('Branding (integration)', () => {
       'image/png',
     );
 
+    expect(operatorUploadResponse.status).toBe(201);
+
+    const forbiddenUploadResponse = await uploadBrandingAsset(
+      app,
+      viewerToken,
+      'logo',
+      pngBuffer,
+      'logo.png',
+      'image/png',
+    );
+
     expect(forbiddenUploadResponse.status).toBe(403);
+  });
+
+  it('allows only ADMIN to remove branding assets — OPERATOR can upload but not reset to default', async () => {
+    const uploadResponse = await uploadBrandingAsset(
+      app,
+      adminToken,
+      'logo',
+      pngBuffer,
+      'logo.png',
+      'image/png',
+    );
+
+    expect(uploadResponse.status).toBe(201);
+
+    const operatorDeleteResponse = await request(app.getHttpServer())
+      .delete('/api/v1/branding/logo')
+      .set('Authorization', `Bearer ${operatorToken}`);
+
+    expect(operatorDeleteResponse.status).toBe(403);
+
+    const adminDeleteResponse = await request(app.getHttpServer())
+      .delete('/api/v1/branding/logo')
+      .set('Authorization', `Bearer ${adminToken}`);
+
+    expect(adminDeleteResponse.status).toBe(200);
+    expect(
+      (adminDeleteResponse.body as ApiResponse<BrandingResource>).data.logoUrl,
+    ).toBeNull();
   });
 
   it('supports the full branding asset lifecycle with public binary serving, cache headers and audit logs', async () => {
@@ -191,10 +254,14 @@ describe('Branding (integration)', () => {
     );
 
     expect(uploadLogoResponse.status).toBe(201);
-    const firstLogoUrl = (uploadLogoResponse.body as ApiResponse<BrandingResource>).data.logoUrl;
+    const firstLogoUrl = (
+      uploadLogoResponse.body as ApiResponse<BrandingResource>
+    ).data.logoUrl;
     expect(firstLogoUrl).toContain('/api/v1/branding/assets/logo?v=');
 
-    const publicLogoResponse = await request(app.getHttpServer()).get(firstLogoUrl as string);
+    const publicLogoResponse = await request(app.getHttpServer()).get(
+      firstLogoUrl as string,
+    );
 
     expect(publicLogoResponse.status).toBe(200);
     expect(publicLogoResponse.headers['content-type']).toContain('image/png');
@@ -205,7 +272,7 @@ describe('Branding (integration)', () => {
 
     const notModifiedResponse = await request(app.getHttpServer())
       .get(firstLogoUrl as string)
-      .set('If-None-Match', publicLogoResponse.headers.etag as string);
+      .set('If-None-Match', publicLogoResponse.headers.etag);
 
     expect(notModifiedResponse.status).toBe(304);
 
@@ -219,12 +286,18 @@ describe('Branding (integration)', () => {
     );
 
     expect(replaceLogoResponse.status).toBe(201);
-    const secondLogoUrl = (replaceLogoResponse.body as ApiResponse<BrandingResource>).data.logoUrl;
+    const secondLogoUrl = (
+      replaceLogoResponse.body as ApiResponse<BrandingResource>
+    ).data.logoUrl;
     expect(secondLogoUrl).not.toBe(firstLogoUrl);
 
-    const replacedLogoResponse = await request(app.getHttpServer()).get(secondLogoUrl as string);
+    const replacedLogoResponse = await request(app.getHttpServer()).get(
+      secondLogoUrl as string,
+    );
     expect(replacedLogoResponse.status).toBe(200);
-    expect(replacedLogoResponse.headers['content-type']).toContain('image/jpeg');
+    expect(replacedLogoResponse.headers['content-type']).toContain(
+      'image/jpeg',
+    );
 
     const uploadFaviconResponse = await uploadBrandingAsset(
       app,
@@ -237,7 +310,8 @@ describe('Branding (integration)', () => {
 
     expect(uploadFaviconResponse.status).toBe(201);
     expect(
-      (uploadFaviconResponse.body as ApiResponse<BrandingResource>).data.faviconUrl,
+      (uploadFaviconResponse.body as ApiResponse<BrandingResource>).data
+        .faviconUrl,
     ).toContain('/api/v1/branding/assets/favicon?v=');
 
     const uploadBrandImageResponse = await uploadBrandingAsset(
@@ -270,7 +344,9 @@ describe('Branding (integration)', () => {
       .set('Authorization', `Bearer ${adminToken}`);
 
     expect(removeLogoResponse.status).toBe(200);
-    expect((removeLogoResponse.body as ApiResponse<BrandingResource>).data.logoUrl).toBeNull();
+    expect(
+      (removeLogoResponse.body as ApiResponse<BrandingResource>).data.logoUrl,
+    ).toBeNull();
 
     const removedLogoAssetResponse = await request(app.getHttpServer()).get(
       '/api/v1/branding/assets/logo',
@@ -312,13 +388,16 @@ describe('Branding (integration)', () => {
     expect(response.status).toBe(200);
 
     const document = response.body as {
-      paths: Record<string, Record<string, { requestBody?: { content?: Record<string, unknown> } }>>;
+      paths: Record<
+        string,
+        Record<string, { requestBody?: { content?: Record<string, unknown> } }>
+      >;
     };
 
     expect(document.paths['/api/v1/branding']?.get).toBeDefined();
-    expect(document.paths['/api/v1/branding/logo']?.post?.requestBody?.content).toHaveProperty(
-      'multipart/form-data',
-    );
+    expect(
+      document.paths['/api/v1/branding/logo']?.post?.requestBody?.content,
+    ).toHaveProperty('multipart/form-data');
     expect(document.paths['/api/v1/branding/assets/logo']?.get).toBeDefined();
     expect(JSON.stringify(document)).not.toContain('logoData');
     expect(JSON.stringify(document)).not.toContain('faviconData');

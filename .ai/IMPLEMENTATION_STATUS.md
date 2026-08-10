@@ -2,6 +2,11 @@
 
 ## Completed
 
+- Added optional per-route `requiresApiKey` (default `true`) to `GatewayRoute`, migration `20260810143920_add_gateway_route_requires_api_key`
+- Reused the existing `GatewayProxyService` decision order (route already resolved before the API Key check) to branch: `requiresApiKey=true` keeps the exact previous behavior; `requiresApiKey=false` skips only the mandatory-key check, still validating a voluntarily sent key
+- Added ADMIN-only authorization for setting/changing `requiresApiKey=false` in `GatewayRoutesService` (`create`/`update`), with `403 REQUIRES_API_KEY_ADMIN_ONLY` for non-ADMIN attempts
+- Added a dedicated audit log entry ("API Key requirement enabled/disabled") whenever `requiresApiKey` actually changes, in addition to including it in the general CREATE/UPDATE audit payloads
+- Added `RequestLog.authenticationMode` (`API_KEY | NONE`), migration in the same file, to distinguish valid unauthenticated calls from invalid ones on protected routes; exposed as an optional filter on `GET /request-logs`
 - Added client-aggregated summary endpoints for API Keys, Allowed IPs, and Gateway Routes
 - Added shared summary query DTO base plus feature-specific summary DTOs
 - Implemented PostgreSQL aggregated summaries with `Prisma.$queryRaw` for:
@@ -74,6 +79,7 @@
 
 ## Notes
 
+- `requiresApiKey=false` live-verified end-to-end against the local dev database/app: true→401, false→bypasses the key check while Allowed IP/Client/Route checks kept blocking as expected, false→reaches the upstream stage, then back to true→401 again
 - `.ai/PROJECT_CONTEXT.md` and `.ai/BACKEND_CONTRACTS.md` were not present at task start
 - Trusted CAs admin is complete on backend
 - Frontend for certificate management remains pending by design

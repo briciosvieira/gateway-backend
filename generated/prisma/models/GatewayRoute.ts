@@ -47,6 +47,7 @@ export type GatewayRouteMinAggregateOutputType = {
   timeoutMs: number | null
   retryCount: number | null
   active: boolean | null
+  requiresApiKey: boolean | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -62,6 +63,7 @@ export type GatewayRouteMaxAggregateOutputType = {
   timeoutMs: number | null
   retryCount: number | null
   active: boolean | null
+  requiresApiKey: boolean | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -77,6 +79,7 @@ export type GatewayRouteCountAggregateOutputType = {
   timeoutMs: number
   retryCount: number
   active: number
+  requiresApiKey: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -104,6 +107,7 @@ export type GatewayRouteMinAggregateInputType = {
   timeoutMs?: true
   retryCount?: true
   active?: true
+  requiresApiKey?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -119,6 +123,7 @@ export type GatewayRouteMaxAggregateInputType = {
   timeoutMs?: true
   retryCount?: true
   active?: true
+  requiresApiKey?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -134,6 +139,7 @@ export type GatewayRouteCountAggregateInputType = {
   timeoutMs?: true
   retryCount?: true
   active?: true
+  requiresApiKey?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -236,6 +242,7 @@ export type GatewayRouteGroupByOutputType = {
   timeoutMs: number
   retryCount: number
   active: boolean
+  requiresApiKey: boolean
   createdAt: Date
   updatedAt: Date
   _count: GatewayRouteCountAggregateOutputType | null
@@ -274,6 +281,7 @@ export type GatewayRouteWhereInput = {
   timeoutMs?: Prisma.IntFilter<"GatewayRoute"> | number
   retryCount?: Prisma.IntFilter<"GatewayRoute"> | number
   active?: Prisma.BoolFilter<"GatewayRoute"> | boolean
+  requiresApiKey?: Prisma.BoolFilter<"GatewayRoute"> | boolean
   createdAt?: Prisma.DateTimeFilter<"GatewayRoute"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"GatewayRoute"> | Date | string
   client?: Prisma.XOR<Prisma.ClientScalarRelationFilter, Prisma.ClientWhereInput>
@@ -292,6 +300,7 @@ export type GatewayRouteOrderByWithRelationInput = {
   timeoutMs?: Prisma.SortOrder
   retryCount?: Prisma.SortOrder
   active?: Prisma.SortOrder
+  requiresApiKey?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   client?: Prisma.ClientOrderByWithRelationInput
@@ -313,6 +322,7 @@ export type GatewayRouteWhereUniqueInput = Prisma.AtLeast<{
   timeoutMs?: Prisma.IntFilter<"GatewayRoute"> | number
   retryCount?: Prisma.IntFilter<"GatewayRoute"> | number
   active?: Prisma.BoolFilter<"GatewayRoute"> | boolean
+  requiresApiKey?: Prisma.BoolFilter<"GatewayRoute"> | boolean
   createdAt?: Prisma.DateTimeFilter<"GatewayRoute"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"GatewayRoute"> | Date | string
   client?: Prisma.XOR<Prisma.ClientScalarRelationFilter, Prisma.ClientWhereInput>
@@ -331,6 +341,7 @@ export type GatewayRouteOrderByWithAggregationInput = {
   timeoutMs?: Prisma.SortOrder
   retryCount?: Prisma.SortOrder
   active?: Prisma.SortOrder
+  requiresApiKey?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.GatewayRouteCountOrderByAggregateInput
@@ -354,6 +365,7 @@ export type GatewayRouteScalarWhereWithAggregatesInput = {
   timeoutMs?: Prisma.IntWithAggregatesFilter<"GatewayRoute"> | number
   retryCount?: Prisma.IntWithAggregatesFilter<"GatewayRoute"> | number
   active?: Prisma.BoolWithAggregatesFilter<"GatewayRoute"> | boolean
+  requiresApiKey?: Prisma.BoolWithAggregatesFilter<"GatewayRoute"> | boolean
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"GatewayRoute"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"GatewayRoute"> | Date | string
 }
@@ -368,6 +380,7 @@ export type GatewayRouteCreateInput = {
   timeoutMs?: number
   retryCount?: number
   active?: boolean
+  requiresApiKey?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   client: Prisma.ClientCreateNestedOneWithoutGatewayRoutesInput
@@ -386,6 +399,7 @@ export type GatewayRouteUncheckedCreateInput = {
   timeoutMs?: number
   retryCount?: number
   active?: boolean
+  requiresApiKey?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   headers?: Prisma.RouteHeaderUncheckedCreateNestedManyWithoutGatewayRouteInput
@@ -402,6 +416,7 @@ export type GatewayRouteUpdateInput = {
   timeoutMs?: Prisma.IntFieldUpdateOperationsInput | number
   retryCount?: Prisma.IntFieldUpdateOperationsInput | number
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  requiresApiKey?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   client?: Prisma.ClientUpdateOneRequiredWithoutGatewayRoutesNestedInput
@@ -420,6 +435,7 @@ export type GatewayRouteUncheckedUpdateInput = {
   timeoutMs?: Prisma.IntFieldUpdateOperationsInput | number
   retryCount?: Prisma.IntFieldUpdateOperationsInput | number
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  requiresApiKey?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   headers?: Prisma.RouteHeaderUncheckedUpdateManyWithoutGatewayRouteNestedInput
@@ -437,6 +453,7 @@ export type GatewayRouteCreateManyInput = {
   timeoutMs?: number
   retryCount?: number
   active?: boolean
+  requiresApiKey?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -451,6 +468,7 @@ export type GatewayRouteUpdateManyMutationInput = {
   timeoutMs?: Prisma.IntFieldUpdateOperationsInput | number
   retryCount?: Prisma.IntFieldUpdateOperationsInput | number
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  requiresApiKey?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -466,6 +484,7 @@ export type GatewayRouteUncheckedUpdateManyInput = {
   timeoutMs?: Prisma.IntFieldUpdateOperationsInput | number
   retryCount?: Prisma.IntFieldUpdateOperationsInput | number
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  requiresApiKey?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -491,6 +510,7 @@ export type GatewayRouteCountOrderByAggregateInput = {
   timeoutMs?: Prisma.SortOrder
   retryCount?: Prisma.SortOrder
   active?: Prisma.SortOrder
+  requiresApiKey?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -511,6 +531,7 @@ export type GatewayRouteMaxOrderByAggregateInput = {
   timeoutMs?: Prisma.SortOrder
   retryCount?: Prisma.SortOrder
   active?: Prisma.SortOrder
+  requiresApiKey?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -526,6 +547,7 @@ export type GatewayRouteMinOrderByAggregateInput = {
   timeoutMs?: Prisma.SortOrder
   retryCount?: Prisma.SortOrder
   active?: Prisma.SortOrder
+  requiresApiKey?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -631,6 +653,7 @@ export type GatewayRouteCreateWithoutClientInput = {
   timeoutMs?: number
   retryCount?: number
   active?: boolean
+  requiresApiKey?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   headers?: Prisma.RouteHeaderCreateNestedManyWithoutGatewayRouteInput
@@ -647,6 +670,7 @@ export type GatewayRouteUncheckedCreateWithoutClientInput = {
   timeoutMs?: number
   retryCount?: number
   active?: boolean
+  requiresApiKey?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   headers?: Prisma.RouteHeaderUncheckedCreateNestedManyWithoutGatewayRouteInput
@@ -693,6 +717,7 @@ export type GatewayRouteScalarWhereInput = {
   timeoutMs?: Prisma.IntFilter<"GatewayRoute"> | number
   retryCount?: Prisma.IntFilter<"GatewayRoute"> | number
   active?: Prisma.BoolFilter<"GatewayRoute"> | boolean
+  requiresApiKey?: Prisma.BoolFilter<"GatewayRoute"> | boolean
   createdAt?: Prisma.DateTimeFilter<"GatewayRoute"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"GatewayRoute"> | Date | string
 }
@@ -707,6 +732,7 @@ export type GatewayRouteCreateWithoutHeadersInput = {
   timeoutMs?: number
   retryCount?: number
   active?: boolean
+  requiresApiKey?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   client: Prisma.ClientCreateNestedOneWithoutGatewayRoutesInput
@@ -724,6 +750,7 @@ export type GatewayRouteUncheckedCreateWithoutHeadersInput = {
   timeoutMs?: number
   retryCount?: number
   active?: boolean
+  requiresApiKey?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   requestLogs?: Prisma.RequestLogUncheckedCreateNestedManyWithoutGatewayRouteInput
@@ -755,6 +782,7 @@ export type GatewayRouteUpdateWithoutHeadersInput = {
   timeoutMs?: Prisma.IntFieldUpdateOperationsInput | number
   retryCount?: Prisma.IntFieldUpdateOperationsInput | number
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  requiresApiKey?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   client?: Prisma.ClientUpdateOneRequiredWithoutGatewayRoutesNestedInput
@@ -772,6 +800,7 @@ export type GatewayRouteUncheckedUpdateWithoutHeadersInput = {
   timeoutMs?: Prisma.IntFieldUpdateOperationsInput | number
   retryCount?: Prisma.IntFieldUpdateOperationsInput | number
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  requiresApiKey?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   requestLogs?: Prisma.RequestLogUncheckedUpdateManyWithoutGatewayRouteNestedInput
@@ -787,6 +816,7 @@ export type GatewayRouteCreateWithoutRequestLogsInput = {
   timeoutMs?: number
   retryCount?: number
   active?: boolean
+  requiresApiKey?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   client: Prisma.ClientCreateNestedOneWithoutGatewayRoutesInput
@@ -804,6 +834,7 @@ export type GatewayRouteUncheckedCreateWithoutRequestLogsInput = {
   timeoutMs?: number
   retryCount?: number
   active?: boolean
+  requiresApiKey?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   headers?: Prisma.RouteHeaderUncheckedCreateNestedManyWithoutGatewayRouteInput
@@ -835,6 +866,7 @@ export type GatewayRouteUpdateWithoutRequestLogsInput = {
   timeoutMs?: Prisma.IntFieldUpdateOperationsInput | number
   retryCount?: Prisma.IntFieldUpdateOperationsInput | number
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  requiresApiKey?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   client?: Prisma.ClientUpdateOneRequiredWithoutGatewayRoutesNestedInput
@@ -852,6 +884,7 @@ export type GatewayRouteUncheckedUpdateWithoutRequestLogsInput = {
   timeoutMs?: Prisma.IntFieldUpdateOperationsInput | number
   retryCount?: Prisma.IntFieldUpdateOperationsInput | number
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  requiresApiKey?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   headers?: Prisma.RouteHeaderUncheckedUpdateManyWithoutGatewayRouteNestedInput
@@ -867,6 +900,7 @@ export type GatewayRouteCreateManyClientInput = {
   timeoutMs?: number
   retryCount?: number
   active?: boolean
+  requiresApiKey?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -881,6 +915,7 @@ export type GatewayRouteUpdateWithoutClientInput = {
   timeoutMs?: Prisma.IntFieldUpdateOperationsInput | number
   retryCount?: Prisma.IntFieldUpdateOperationsInput | number
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  requiresApiKey?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   headers?: Prisma.RouteHeaderUpdateManyWithoutGatewayRouteNestedInput
@@ -897,6 +932,7 @@ export type GatewayRouteUncheckedUpdateWithoutClientInput = {
   timeoutMs?: Prisma.IntFieldUpdateOperationsInput | number
   retryCount?: Prisma.IntFieldUpdateOperationsInput | number
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  requiresApiKey?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   headers?: Prisma.RouteHeaderUncheckedUpdateManyWithoutGatewayRouteNestedInput
@@ -913,6 +949,7 @@ export type GatewayRouteUncheckedUpdateManyWithoutClientInput = {
   timeoutMs?: Prisma.IntFieldUpdateOperationsInput | number
   retryCount?: Prisma.IntFieldUpdateOperationsInput | number
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  requiresApiKey?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -968,6 +1005,7 @@ export type GatewayRouteSelect<ExtArgs extends runtime.Types.Extensions.Internal
   timeoutMs?: boolean
   retryCount?: boolean
   active?: boolean
+  requiresApiKey?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   client?: boolean | Prisma.ClientDefaultArgs<ExtArgs>
@@ -987,6 +1025,7 @@ export type GatewayRouteSelectCreateManyAndReturn<ExtArgs extends runtime.Types.
   timeoutMs?: boolean
   retryCount?: boolean
   active?: boolean
+  requiresApiKey?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   client?: boolean | Prisma.ClientDefaultArgs<ExtArgs>
@@ -1003,6 +1042,7 @@ export type GatewayRouteSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.
   timeoutMs?: boolean
   retryCount?: boolean
   active?: boolean
+  requiresApiKey?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   client?: boolean | Prisma.ClientDefaultArgs<ExtArgs>
@@ -1019,11 +1059,12 @@ export type GatewayRouteSelectScalar = {
   timeoutMs?: boolean
   retryCount?: boolean
   active?: boolean
+  requiresApiKey?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type GatewayRouteOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "clientId" | "name" | "slug" | "description" | "destinationUrl" | "method" | "timeoutMs" | "retryCount" | "active" | "createdAt" | "updatedAt", ExtArgs["result"]["gatewayRoute"]>
+export type GatewayRouteOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "clientId" | "name" | "slug" | "description" | "destinationUrl" | "method" | "timeoutMs" | "retryCount" | "active" | "requiresApiKey" | "createdAt" | "updatedAt", ExtArgs["result"]["gatewayRoute"]>
 export type GatewayRouteInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   client?: boolean | Prisma.ClientDefaultArgs<ExtArgs>
   headers?: boolean | Prisma.GatewayRoute$headersArgs<ExtArgs>
@@ -1055,6 +1096,7 @@ export type $GatewayRoutePayload<ExtArgs extends runtime.Types.Extensions.Intern
     timeoutMs: number
     retryCount: number
     active: boolean
+    requiresApiKey: boolean
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["gatewayRoute"]>
@@ -1493,6 +1535,7 @@ export interface GatewayRouteFieldRefs {
   readonly timeoutMs: Prisma.FieldRef<"GatewayRoute", 'Int'>
   readonly retryCount: Prisma.FieldRef<"GatewayRoute", 'Int'>
   readonly active: Prisma.FieldRef<"GatewayRoute", 'Boolean'>
+  readonly requiresApiKey: Prisma.FieldRef<"GatewayRoute", 'Boolean'>
   readonly createdAt: Prisma.FieldRef<"GatewayRoute", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"GatewayRoute", 'DateTime'>
 }

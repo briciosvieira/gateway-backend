@@ -88,3 +88,11 @@ export const RequestOrigin = {
 } as const
 
 export type RequestOrigin = (typeof RequestOrigin)[keyof typeof RequestOrigin]
+
+
+export const RequestLogAuthenticationMode = {
+  API_KEY: 'API_KEY',
+  NONE: 'NONE'
+} as const
+
+export type RequestLogAuthenticationMode = (typeof RequestLogAuthenticationMode)[keyof typeof RequestLogAuthenticationMode]

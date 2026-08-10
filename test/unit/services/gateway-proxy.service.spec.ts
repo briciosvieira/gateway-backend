@@ -10,7 +10,11 @@ const mockUndiciRequest = undiciRequest as jest.MockedFunction<typeof undiciRequ
 import { randomBytes } from 'node:crypto';
 import type { ConfigService } from '@nestjs/config';
 import type { FastifyRequest } from 'fastify';
-import { AllowedIpType, RequestOrigin } from '../../../generated/prisma/client';
+import {
+  AllowedIpType,
+  RequestLogAuthenticationMode,
+  RequestOrigin,
+} from '../../../generated/prisma/client';
 import { generateApiKey, hashApiKey } from '../../../src/modules/api-keys/utils/api-key.util';
 import { GatewayProxyService } from '../../../src/modules/gateway-proxy/gateway-proxy.service';
 import { isGatewayErrorResult } from '../../../src/modules/gateway-proxy/interfaces/gateway-error.interface';
@@ -44,6 +48,7 @@ interface RouteRecord {
   timeoutMs: number;
   retryCount: number;
   active: boolean;
+  requiresApiKey: boolean;
   clientId: string;
 }
 
@@ -76,6 +81,7 @@ function buildRoute(overrides: Partial<RouteRecord> = {}): RouteRecord {
     timeoutMs: 5000,
     retryCount: 0,
     active: true,
+    requiresApiKey: true,
     clientId: CLIENT_ID,
     ...overrides,
   };
@@ -428,6 +434,109 @@ describe('GatewayProxyService', () => {
       if (isGatewayErrorResult(result)) {
         expect(result.code).toBe('IP_NOT_ALLOWED');
         expect(result.statusCode).toBe(403);
+      }
+    });
+  });
+
+  describe('handleGatewayRequest — requiresApiKey=false', () => {
+    it('proceeds without an API Key and reaches the upstream when the route does not require one', async () => {
+      setupResolutionMocks(prisma, { route: buildRoute({ requiresApiKey: false }) });
+      mockUpstreamSuccess(200, { ok: true });
+
+      const result = await service.handleGatewayRequest(buildFastifyRequest());
+
+      expect(isGatewayErrorResult(result)).toBe(false);
+      if (!isGatewayErrorResult(result)) {
+        expect(result.statusCode).toBe(200);
+      }
+      expect(requestLogsService.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          apiKeyId: null,
+          authenticationMode: RequestLogAuthenticationMode.NONE,
+          result: 'SUCCESS',
+        }),
+      );
+    });
+
+    it('does not return API_KEY_REQUIRED when the header is missing and the route does not require it', async () => {
+      setupResolutionMocks(prisma, { route: buildRoute({ requiresApiKey: false }) });
+      mockUpstreamSuccess();
+
+      const result = await service.handleGatewayRequest(buildFastifyRequest());
+
+      if (isGatewayErrorResult(result)) {
+        expect(result.code).not.toBe('API_KEY_REQUIRED');
+      }
+    });
+
+    it('still returns IP_NOT_ALLOWED when the source IP is blocked, proving Allowed IP is not skipped', async () => {
+      setupResolutionMocks(prisma, {
+        route: buildRoute({ requiresApiKey: false }),
+        allowedIps: [],
+      });
+
+      const result = await service.handleGatewayRequest(buildFastifyRequest());
+
+      expect(isGatewayErrorResult(result)).toBe(true);
+      if (isGatewayErrorResult(result)) {
+        expect(result.code).toBe('IP_NOT_ALLOWED');
+      }
+    });
+
+    it('still returns CLIENT_INACTIVE when the client is inactive, proving Client status is not skipped', async () => {
+      prisma.gatewayRoute.findUnique.mockResolvedValue(
+        buildRoute({ requiresApiKey: false }) as never,
+      );
+      prisma.client.findUnique.mockResolvedValue({ active: false } as never);
+
+      const result = await service.handleGatewayRequest(buildFastifyRequest());
+
+      expect(isGatewayErrorResult(result)).toBe(true);
+      if (isGatewayErrorResult(result)) {
+        expect(result.code).toBe('CLIENT_INACTIVE');
+      }
+    });
+
+    it('still returns GATEWAY_ROUTE_NOT_FOUND when the route is inactive, proving Route status is not skipped', async () => {
+      prisma.gatewayRoute.findUnique.mockResolvedValue(
+        buildRoute({ requiresApiKey: false, active: false }) as never,
+      );
+
+      const result = await service.handleGatewayRequest(buildFastifyRequest());
+
+      expect(isGatewayErrorResult(result)).toBe(true);
+      if (isGatewayErrorResult(result)) {
+        expect(result.code).toBe('GATEWAY_ROUTE_NOT_FOUND');
+      }
+    });
+
+    it('validates a valid X-API-Key sent voluntarily and proceeds normally', async () => {
+      setupResolutionMocks(prisma, { route: buildRoute({ requiresApiKey: false }) });
+      mockUpstreamSuccess();
+
+      const result = await service.handleGatewayRequest(buildValidRequest());
+
+      expect(isGatewayErrorResult(result)).toBe(false);
+      expect(requestLogsService.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          apiKeyId: API_KEY_ID,
+          authenticationMode: RequestLogAuthenticationMode.NONE,
+        }),
+      );
+    });
+
+    it('rejects with INVALID_API_KEY when an invalid X-API-Key is sent voluntarily', async () => {
+      setupResolutionMocks(prisma, {
+        route: buildRoute({ requiresApiKey: false }),
+        apiKeyRecord: null,
+      });
+
+      const result = await service.handleGatewayRequest(buildValidRequest());
+
+      expect(isGatewayErrorResult(result)).toBe(true);
+      if (isGatewayErrorResult(result)) {
+        expect(result.code).toBe('INVALID_API_KEY');
+        expect(result.statusCode).toBe(401);
       }
     });
   });

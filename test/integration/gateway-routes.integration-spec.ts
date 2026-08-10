@@ -34,6 +34,7 @@ interface GatewayRouteResponseData {
   timeoutMs: number;
   retryCount: number;
   active: boolean;
+  requiresApiKey: boolean;
   createdAt: string;
   updatedAt: string;
   client: {
@@ -123,6 +124,7 @@ describe('GatewayRoutes (integration)', () => {
     expect(body.data.publicPath).toBe(`/gateway${slug}`);
     expect(body.data.clientId).toBe(client.id);
     expect(body.data.active).toBe(true);
+    expect(body.data.requiresApiKey).toBe(true);
   });
 
   it('rejects a slug containing whitespace', async () => {
@@ -296,6 +298,153 @@ describe('GatewayRoutes (integration)', () => {
     const response = await request(app.getHttpServer()).get('/api/v1/gateway-routes');
 
     expect(response.status).toBe(401);
+  });
+
+  describe('requiresApiKey', () => {
+    const createdGatewayRouteIdsForRequiresApiKey: string[] = [];
+    const createdUserIdsForRequiresApiKey: string[] = [];
+    let operatorToken: string;
+
+    beforeAll(async () => {
+      const { user: operatorUser } = await createTestUser(db, { roleCode: RoleCode.OPERATOR });
+      createdUserIdsForRequiresApiKey.push(operatorUser.id);
+      operatorToken = signTestAccessToken({
+        id: operatorUser.id,
+        username: operatorUser.username,
+        email: operatorUser.email,
+        role: RoleCode.OPERATOR,
+        roleLevel: 50,
+        firstLogin: false,
+      });
+    });
+
+    afterAll(async () => {
+      if (createdGatewayRouteIdsForRequiresApiKey.length > 0) {
+        await db.prisma.gatewayRoute.deleteMany({
+          where: { id: { in: createdGatewayRouteIdsForRequiresApiKey } },
+        });
+      }
+
+      if (createdUserIdsForRequiresApiKey.length > 0) {
+        await db.prisma.user.deleteMany({
+          where: { id: { in: createdUserIdsForRequiresApiKey } },
+        });
+      }
+    });
+
+    it('allows ADMIN to create a gateway route with requiresApiKey=false', async () => {
+      const response = await authorizedPost(app, '/api/v1/gateway-routes', adminToken, {
+        name: 'Public Route',
+        slug: randomSlug(),
+        destinationUrl: UPSTREAM_URL,
+        method: GatewayHttpMethod.POST,
+        clientId: client.id,
+        requiresApiKey: false,
+      });
+
+      expect(response.status).toBe(201);
+
+      const body = response.body as ApiResponse<GatewayRouteResponseData>;
+      createdGatewayRouteIdsForRequiresApiKey.push(body.data.id);
+      expect(body.data.requiresApiKey).toBe(false);
+    });
+
+    it('returns 403 when an OPERATOR tries to create a gateway route with requiresApiKey=false', async () => {
+      const response = await authorizedPost(app, '/api/v1/gateway-routes', operatorToken, {
+        name: 'Operator Public Route',
+        slug: randomSlug(),
+        destinationUrl: UPSTREAM_URL,
+        method: GatewayHttpMethod.POST,
+        clientId: client.id,
+        requiresApiKey: false,
+      });
+
+      expect(response.status).toBe(403);
+
+      const body = response.body as ApiErrorResponse;
+      expect(body.code).toBe('REQUIRES_API_KEY_ADMIN_ONLY');
+    });
+
+    it('allows ADMIN to toggle requiresApiKey from true to false and back, recording an audit log each time', async () => {
+      const route = await createTestGatewayRoute(db, client.id, { requiresApiKey: true });
+      createdGatewayRouteIdsForRequiresApiKey.push(route.id);
+
+      const disableResponse = await authorizedPatch(
+        app,
+        `/api/v1/gateway-routes/${route.id}`,
+        adminToken,
+        { requiresApiKey: false },
+      );
+
+      expect(disableResponse.status).toBe(200);
+      const disableBody = disableResponse.body as ApiResponse<GatewayRouteResponseData>;
+      expect(disableBody.data.requiresApiKey).toBe(false);
+
+      const disableAudit = await db.prisma.auditLog.findFirst({
+        where: {
+          entityId: route.id,
+          description: { contains: 'API Key requirement disabled' },
+        },
+      });
+      expect(disableAudit).not.toBeNull();
+
+      const enableResponse = await authorizedPatch(
+        app,
+        `/api/v1/gateway-routes/${route.id}`,
+        adminToken,
+        { requiresApiKey: true },
+      );
+
+      expect(enableResponse.status).toBe(200);
+      const enableBody = enableResponse.body as ApiResponse<GatewayRouteResponseData>;
+      expect(enableBody.data.requiresApiKey).toBe(true);
+
+      const enableAudit = await db.prisma.auditLog.findFirst({
+        where: {
+          entityId: route.id,
+          description: { contains: 'API Key requirement enabled' },
+        },
+      });
+      expect(enableAudit).not.toBeNull();
+    });
+
+    it('returns 403 when an OPERATOR tries to change requiresApiKey from true to false', async () => {
+      const route = await createTestGatewayRoute(db, client.id, { requiresApiKey: true });
+      createdGatewayRouteIdsForRequiresApiKey.push(route.id);
+
+      const response = await authorizedPatch(
+        app,
+        `/api/v1/gateway-routes/${route.id}`,
+        operatorToken,
+        { requiresApiKey: false },
+      );
+
+      expect(response.status).toBe(403);
+
+      const body = response.body as ApiErrorResponse;
+      expect(body.code).toBe('REQUIRES_API_KEY_ADMIN_ONLY');
+
+      const stillTrue = await db.prisma.gatewayRoute.findUnique({ where: { id: route.id } });
+      expect(stillTrue?.requiresApiKey).toBe(true);
+    });
+
+    it('allows an OPERATOR to update other fields on a requiresApiKey=false route without altering it', async () => {
+      const route = await createTestGatewayRoute(db, client.id, { requiresApiKey: false });
+      createdGatewayRouteIdsForRequiresApiKey.push(route.id);
+
+      const response = await authorizedPatch(
+        app,
+        `/api/v1/gateway-routes/${route.id}`,
+        operatorToken,
+        { name: 'Renamed by operator' },
+      );
+
+      expect(response.status).toBe(200);
+
+      const body = response.body as ApiResponse<GatewayRouteResponseData>;
+      expect(body.data.name).toBe('Renamed by operator');
+      expect(body.data.requiresApiKey).toBe(false);
+    });
   });
 
   describe('DELETE /gateway-routes/:id', () => {

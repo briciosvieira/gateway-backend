@@ -199,6 +199,7 @@ export const GatewayRouteScalarFieldEnum = {
   timeoutMs: 'timeoutMs',
   retryCount: 'retryCount',
   active: 'active',
+  requiresApiKey: 'requiresApiKey',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -241,6 +242,7 @@ export const RequestLogScalarFieldEnum = {
   durationMs: 'durationMs',
   attempts: 'attempts',
   result: 'result',
+  authenticationMode: 'authenticationMode',
   errorCode: 'errorCode',
   errorMessage: 'errorMessage',
   requestHeaders: 'requestHeaders',

@@ -11,7 +11,11 @@ import {
   Max,
   Min,
 } from 'class-validator';
-import { RequestLogResult, RequestOrigin } from '../../../../generated/prisma/client';
+import {
+  RequestLogAuthenticationMode,
+  RequestLogResult,
+  RequestOrigin,
+} from '../../../../generated/prisma/client';
 
 const requestLogSortFields = [
   'attemptedAt',
@@ -69,6 +73,15 @@ export class FindRequestLogsQueryDto {
   @IsOptional()
   @IsUUID()
   gatewayRouteId?: string;
+
+  @ApiPropertyOptional({
+    enum: RequestLogAuthenticationMode,
+    description:
+      'Distinguishes requests that went through a route requiring an API Key from requests accepted because the route did not require one.',
+  })
+  @IsOptional()
+  @IsEnum(RequestLogAuthenticationMode)
+  authenticationMode?: RequestLogAuthenticationMode;
 
   @ApiPropertyOptional({
     example: '192.168.1.10',

@@ -1,4 +1,8 @@
-import type { RequestLogResult, RequestOrigin } from '../../../../generated/prisma/client';
+import type {
+  RequestLogAuthenticationMode,
+  RequestLogResult,
+  RequestOrigin,
+} from '../../../../generated/prisma/client';
 
 export interface CreateRequestLogInput {
   requestId: string;
@@ -8,6 +12,7 @@ export interface CreateRequestLogInput {
   clientId?: string | null;
   apiKeyId?: string | null;
   gatewayRouteId?: string | null;
+  authenticationMode: RequestLogAuthenticationMode;
   sourceIp: string;
   method: string;
   publicPath: string;

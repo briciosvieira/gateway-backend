@@ -336,6 +336,13 @@ export type EnumRequestLogResultFilter<$PrismaModel = never> = {
   not?: Prisma.NestedEnumRequestLogResultFilter<$PrismaModel> | $Enums.RequestLogResult
 }
 
+export type EnumRequestLogAuthenticationModeFilter<$PrismaModel = never> = {
+  equals?: $Enums.RequestLogAuthenticationMode | Prisma.EnumRequestLogAuthenticationModeFieldRefInput<$PrismaModel>
+  in?: $Enums.RequestLogAuthenticationMode[] | Prisma.ListEnumRequestLogAuthenticationModeFieldRefInput<$PrismaModel>
+  notIn?: $Enums.RequestLogAuthenticationMode[] | Prisma.ListEnumRequestLogAuthenticationModeFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumRequestLogAuthenticationModeFilter<$PrismaModel> | $Enums.RequestLogAuthenticationMode
+}
+
 export type EnumRequestOriginNullableWithAggregatesFilter<$PrismaModel = never> = {
   equals?: $Enums.RequestOrigin | Prisma.EnumRequestOriginFieldRefInput<$PrismaModel> | null
   in?: $Enums.RequestOrigin[] | Prisma.ListEnumRequestOriginFieldRefInput<$PrismaModel> | null
@@ -370,6 +377,16 @@ export type EnumRequestLogResultWithAggregatesFilter<$PrismaModel = never> = {
   _count?: Prisma.NestedIntFilter<$PrismaModel>
   _min?: Prisma.NestedEnumRequestLogResultFilter<$PrismaModel>
   _max?: Prisma.NestedEnumRequestLogResultFilter<$PrismaModel>
+}
+
+export type EnumRequestLogAuthenticationModeWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.RequestLogAuthenticationMode | Prisma.EnumRequestLogAuthenticationModeFieldRefInput<$PrismaModel>
+  in?: $Enums.RequestLogAuthenticationMode[] | Prisma.ListEnumRequestLogAuthenticationModeFieldRefInput<$PrismaModel>
+  notIn?: $Enums.RequestLogAuthenticationMode[] | Prisma.ListEnumRequestLogAuthenticationModeFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumRequestLogAuthenticationModeWithAggregatesFilter<$PrismaModel> | $Enums.RequestLogAuthenticationMode
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumRequestLogAuthenticationModeFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumRequestLogAuthenticationModeFilter<$PrismaModel>
 }
 
 export type BytesNullableFilter<$PrismaModel = never> = {
@@ -686,6 +703,13 @@ export type NestedEnumRequestLogResultFilter<$PrismaModel = never> = {
   not?: Prisma.NestedEnumRequestLogResultFilter<$PrismaModel> | $Enums.RequestLogResult
 }
 
+export type NestedEnumRequestLogAuthenticationModeFilter<$PrismaModel = never> = {
+  equals?: $Enums.RequestLogAuthenticationMode | Prisma.EnumRequestLogAuthenticationModeFieldRefInput<$PrismaModel>
+  in?: $Enums.RequestLogAuthenticationMode[] | Prisma.ListEnumRequestLogAuthenticationModeFieldRefInput<$PrismaModel>
+  notIn?: $Enums.RequestLogAuthenticationMode[] | Prisma.ListEnumRequestLogAuthenticationModeFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumRequestLogAuthenticationModeFilter<$PrismaModel> | $Enums.RequestLogAuthenticationMode
+}
+
 export type NestedEnumRequestOriginNullableWithAggregatesFilter<$PrismaModel = never> = {
   equals?: $Enums.RequestOrigin | Prisma.EnumRequestOriginFieldRefInput<$PrismaModel> | null
   in?: $Enums.RequestOrigin[] | Prisma.ListEnumRequestOriginFieldRefInput<$PrismaModel> | null
@@ -731,6 +755,16 @@ export type NestedEnumRequestLogResultWithAggregatesFilter<$PrismaModel = never>
   _count?: Prisma.NestedIntFilter<$PrismaModel>
   _min?: Prisma.NestedEnumRequestLogResultFilter<$PrismaModel>
   _max?: Prisma.NestedEnumRequestLogResultFilter<$PrismaModel>
+}
+
+export type NestedEnumRequestLogAuthenticationModeWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.RequestLogAuthenticationMode | Prisma.EnumRequestLogAuthenticationModeFieldRefInput<$PrismaModel>
+  in?: $Enums.RequestLogAuthenticationMode[] | Prisma.ListEnumRequestLogAuthenticationModeFieldRefInput<$PrismaModel>
+  notIn?: $Enums.RequestLogAuthenticationMode[] | Prisma.ListEnumRequestLogAuthenticationModeFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumRequestLogAuthenticationModeWithAggregatesFilter<$PrismaModel> | $Enums.RequestLogAuthenticationMode
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumRequestLogAuthenticationModeFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumRequestLogAuthenticationModeFilter<$PrismaModel>
 }
 
 export type NestedBytesNullableFilter<$PrismaModel = never> = {
