@@ -1,5 +1,5 @@
 import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
-import { AllowedIpType } from '../../../generated/prisma/client';
+import { AllowedIpType, Prisma } from '../../../generated/prisma/client';
 import { AllowedIpsService } from '../../../src/modules/allowed-ips/allowed-ips.service';
 import type { AllowedHostnameResolverService } from '../../../src/modules/allowed-ips/allowed-hostname-resolver.service';
 import type { AuditLogsService } from '../../../src/modules/audit-logs/audit-logs.service';
@@ -118,6 +118,66 @@ describe('AllowedIpsService', () => {
           }),
         }),
       );
+    });
+
+    it('converts a PrismaClientValidationError on create into a coherent BadRequestException instead of a raw 500', async () => {
+      prisma.client.findUnique.mockResolvedValue(activeClientFixture);
+      prisma.allowedIp.findUnique.mockResolvedValue(null);
+      prisma.allowedIp.create.mockRejectedValue(
+        new Prisma.PrismaClientValidationError(
+          "Invalid value for argument `type`. Expected AllowedIpType.",
+          { clientVersion: '7.9.1' },
+        ),
+      );
+
+      await expect(
+        service.create(authenticatedAdminFixture, requestContext, {
+          clientId: activeClientFixture.id,
+          address: 'wdcnet.com.br',
+        }),
+      ).rejects.toMatchObject({
+        response: { code: 'ALLOWED_IP_TYPE_NOT_SUPPORTED' },
+      });
+    });
+
+    it('converts a P2002 PrismaClientKnownRequestError on create into ConflictException with ALLOWED_IP_ALREADY_EXISTS', async () => {
+      prisma.client.findUnique.mockResolvedValue(activeClientFixture);
+      prisma.allowedIp.findUnique.mockResolvedValue(null);
+      prisma.allowedIp.create.mockRejectedValue(
+        new Prisma.PrismaClientKnownRequestError('Unique constraint failed.', {
+          code: 'P2002',
+          clientVersion: '7.9.1',
+        }),
+      );
+
+      await expect(
+        service.create(authenticatedAdminFixture, requestContext, {
+          clientId: activeClientFixture.id,
+          address: '203.0.113.77',
+        }),
+      ).rejects.toMatchObject({
+        response: { code: 'ALLOWED_IP_ALREADY_EXISTS' },
+      });
+    });
+
+    it('never leaks a raw Prisma error message to the caller on an unexpected persistence failure', async () => {
+      prisma.client.findUnique.mockResolvedValue(activeClientFixture);
+      prisma.allowedIp.findUnique.mockResolvedValue(null);
+      prisma.allowedIp.create.mockRejectedValue(
+        new Prisma.PrismaClientKnownRequestError('relation "allowed_ips" does not exist', {
+          code: 'P2021',
+          clientVersion: '7.9.1',
+        }),
+      );
+
+      await expect(
+        service.create(authenticatedAdminFixture, requestContext, {
+          clientId: activeClientFixture.id,
+          address: '203.0.113.78',
+        }),
+      ).rejects.toMatchObject({
+        response: { code: 'ALLOWED_IP_PERSISTENCE_FAILED' },
+      });
     });
 
     it('throws ConflictException when the address is already allowed for the client', async () => {

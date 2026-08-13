@@ -1,4 +1,10 @@
-import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { AllowedIpType, AuditAction, AuditEntity, Prisma } from '../../../generated/prisma/client';
 import type {
   ClientResourceSummarySortDirection,
@@ -65,6 +71,8 @@ interface CountRow {
 
 @Injectable()
 export class AllowedIpsService {
+  private readonly logger = new Logger(AllowedIpsService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly auditLogsService: AuditLogsService,
@@ -76,6 +84,16 @@ export class AllowedIpsService {
     requestContext: RequestContext,
     dto: CreateAllowedIpDto,
   ) {
+    this.logger.log(
+      `[AllowedIpsService.create] ${JSON.stringify({
+        requestId: requestContext.requestId,
+        userId: currentUser.id,
+        role: currentUser.role,
+        clientId: dto.clientId,
+        address: dto.address,
+      })}`,
+    );
+
     const client = await this.getClientOrThrow(dto.clientId);
 
     if (!client.active) {
@@ -83,6 +101,25 @@ export class AllowedIpsService {
     }
 
     const { normalizedAddress, type } = parseAllowedIpAddress(dto.address);
+
+    if (!type) {
+      // Defensive guard: `type` can only be falsy here if the running process's generated
+      // Prisma Client enum (AllowedIpType) does not yet include the value parseAllowedIpAddress
+      // resolved to — i.e. this deployment's Prisma Client/schema is out of sync with the code
+      // (stale build, or a migration not applied). Without this check, Prisma would receive
+      // `type: undefined` and throw a PrismaClientValidationError, which is not an HttpException
+      // and would surface to the frontend as a generic 500 "Ocorreu um erro inesperado.".
+      this.logger.error(
+        `[AllowedIpsService.create] resolved type is missing — Prisma Client/schema likely out of date ${JSON.stringify(
+          { address: dto.address, normalizedAddress },
+        )}`,
+      );
+      throw new BadRequestException({
+        message:
+          'This installation does not support this Allowed IP type yet. Ask an administrator to redeploy the backend with the latest schema.',
+        code: 'ALLOWED_IP_TYPE_NOT_SUPPORTED',
+      });
+    }
 
     const existingAllowedIp = await this.prisma.allowedIp.findUnique({
       where: {
@@ -94,21 +131,30 @@ export class AllowedIpsService {
     });
 
     if (existingAllowedIp) {
-      throw new ConflictException(
-        'This IP address or CIDR network is already allowed for this client.',
-      );
+      throw new ConflictException({
+        message: 'This IP address, CIDR network or hostname is already allowed for this client.',
+        code: 'ALLOWED_IP_ALREADY_EXISTS',
+      });
     }
 
-    const allowedIp = await this.prisma.allowedIp.create({
-      data: {
-        clientId: client.id,
-        address: normalizedAddress,
-        type,
-        description: this.normalizeOptionalText(dto.description),
-        active: true,
-      },
-      select: allowedIpSelect,
-    });
+    const createData = {
+      clientId: client.id,
+      address: normalizedAddress,
+      type,
+      description: this.normalizeOptionalText(dto.description),
+      active: true,
+    };
+
+    let allowedIp: Prisma.AllowedIpGetPayload<{ select: typeof allowedIpSelect }>;
+
+    try {
+      allowedIp = await this.prisma.allowedIp.create({
+        data: createData,
+        select: allowedIpSelect,
+      });
+    } catch (error) {
+      throw this.handlePersistenceError('create', error);
+    }
 
     await this.auditLogsService.create({
       userId: currentUser.id,
@@ -285,6 +331,16 @@ export class AllowedIpsService {
       normalizedAddress = parsed.normalizedAddress;
       type = parsed.type;
 
+      if (!type) {
+        // See the matching guard in create() for why this can happen (Prisma Client/schema
+        // out of sync with the code) and why it must not reach Prisma as `type: undefined`.
+        throw new BadRequestException({
+          message:
+            'This installation does not support this Allowed IP type yet. Ask an administrator to redeploy the backend with the latest schema.',
+          code: 'ALLOWED_IP_TYPE_NOT_SUPPORTED',
+        });
+      }
+
       if (normalizedAddress !== currentAllowedIp.address) {
         const conflictingAllowedIp = await this.prisma.allowedIp.findUnique({
           where: {
@@ -296,25 +352,32 @@ export class AllowedIpsService {
         });
 
         if (conflictingAllowedIp) {
-          throw new ConflictException(
-            'This IP address or CIDR network is already allowed for this client.',
-          );
+          throw new ConflictException({
+            message: 'This IP address, CIDR network or hostname is already allowed for this client.',
+            code: 'ALLOWED_IP_ALREADY_EXISTS',
+          });
         }
       }
     }
 
-    const updatedAllowedIp = await this.prisma.allowedIp.update({
-      where: {
-        id: allowedIpId,
-      },
-      data: {
-        ...(normalizedAddress !== undefined ? { address: normalizedAddress, type } : {}),
-        ...(dto.description !== undefined
-          ? { description: this.normalizeOptionalText(dto.description) }
-          : {}),
-      },
-      select: allowedIpSelect,
-    });
+    let updatedAllowedIp: Prisma.AllowedIpGetPayload<{ select: typeof allowedIpSelect }>;
+
+    try {
+      updatedAllowedIp = await this.prisma.allowedIp.update({
+        where: {
+          id: allowedIpId,
+        },
+        data: {
+          ...(normalizedAddress !== undefined ? { address: normalizedAddress, type } : {}),
+          ...(dto.description !== undefined
+            ? { description: this.normalizeOptionalText(dto.description) }
+            : {}),
+        },
+        select: allowedIpSelect,
+      });
+    } catch (error) {
+      throw this.handlePersistenceError('update', error);
+    }
 
     await this.auditLogsService.create({
       userId: currentUser.id,
@@ -545,5 +608,61 @@ export class AllowedIpsService {
     const normalizedValue = value.trim();
 
     return normalizedValue.length > 0 ? normalizedValue : null;
+  }
+
+  /**
+   * Converts a raw Prisma failure on an Allowed IP write into a coherent,
+   * actionable HTTP error instead of letting it bubble up as an opaque 500
+   * ("Internal server error." from the global filter, since a Prisma error
+   * is not an HttpException). Never exposes the stack trace to the caller —
+   * full details are logged server-side only.
+   */
+  private handlePersistenceError(operation: 'create' | 'update', error: unknown): Error {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      this.logger.error(
+        `[AllowedIpsService.${operation}] Prisma error ${JSON.stringify({
+          name: error.name,
+          code: error.code,
+          meta: error.meta,
+          message: error.message,
+        })}`,
+      );
+
+      if (error.code === 'P2002') {
+        return new ConflictException({
+          message: 'This IP address, CIDR network or hostname is already allowed for this client.',
+          code: 'ALLOWED_IP_ALREADY_EXISTS',
+        });
+      }
+
+      return new BadRequestException({
+        message: 'Could not save this Allowed IP due to a database error.',
+        code: 'ALLOWED_IP_PERSISTENCE_FAILED',
+      });
+    }
+
+    if (error instanceof Prisma.PrismaClientValidationError) {
+      // The Prisma Client in this process does not accept the value it was given (e.g. a type
+      // not present in its generated enum) — this is the exact signature of a Prisma
+      // Client/schema that is out of sync with the code (stale build, or a migration not yet
+      // applied against this environment's database).
+      this.logger.error(
+        `[AllowedIpsService.${operation}] Prisma validation error: ${error.message}`,
+      );
+
+      return new BadRequestException({
+        message:
+          'This installation does not support this Allowed IP type yet. Ask an administrator to redeploy the backend with the latest schema.',
+        code: 'ALLOWED_IP_TYPE_NOT_SUPPORTED',
+      });
+    }
+
+    this.logger.error(
+      `[AllowedIpsService.${operation}] unexpected persistence error: ${
+        error instanceof Error ? error.stack ?? error.message : String(error)
+      }`,
+    );
+
+    return error instanceof Error ? error : new Error('Unknown Allowed IP persistence error.');
   }
 }
