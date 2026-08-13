@@ -5,6 +5,7 @@ import {
   GatewayHttpMethod,
   RequestOrigin,
 } from '../../generated/prisma/client';
+import { AllowedHostnameResolverService } from '../../src/modules/allowed-ips/allowed-hostname-resolver.service';
 import { createTestApiKey } from '../helpers/factories/api-key.factory';
 import { createTestClient } from '../helpers/factories/client.factory';
 import { createTestGatewayRoute } from '../helpers/factories/gateway-route.factory';
@@ -672,6 +673,126 @@ describe('Gateway Proxy (integration)', () => {
       const requestLog = await db.prisma.requestLog.findUnique({ where: { requestId } });
       expect(requestLog?.apiKeyId).not.toBeNull();
       expect(requestLog?.authenticationMode).toBe('NONE');
+    });
+  });
+
+  describe('17. Gateway route with an Allowed IP of type HOSTNAME', () => {
+    // DNS is not exercised for real here — the resolver provider is overridden with a
+    // controllable mock so the source-IP matching logic can be verified deterministically,
+    // without depending on live DNS during the test run. Resolver behavior itself (real
+    // resolve4/resolve6, caching, TTL, fail-closed) is covered by
+    // test/unit/services/allowed-hostname-resolver.service.spec.ts.
+    let hostnameApp: NestFastifyApplication;
+    let allowedHostnameResolverService: { resolve: jest.Mock };
+    const clientIds: string[] = [];
+
+    beforeAll(async () => {
+      hostnameApp = await createTestApp([
+        { provide: AllowedHostnameResolverService, useValue: { resolve: jest.fn(), invalidate: jest.fn() } },
+      ]);
+      allowedHostnameResolverService = hostnameApp.get(AllowedHostnameResolverService);
+    });
+
+    afterAll(async () => {
+      await hostnameApp.close();
+      await cleanupClients(db, clientIds);
+    });
+
+    it('accepts the request when the source IP is among the addresses resolved for the hostname', async () => {
+      const client = await createTestClient(db);
+      clientIds.push(client.id);
+
+      const route = await createTestGatewayRoute(db, client.id, {
+        destinationUrl: `${mockUpstream.url}/scenario-17-hostname-allowed`,
+        method: GatewayHttpMethod.GET,
+      });
+      await db.prisma.allowedIp.create({
+        data: { clientId: client.id, address: 'api.cliente.com.br', type: AllowedIpType.HOSTNAME },
+      });
+      allowedHostnameResolverService.resolve.mockResolvedValue(['127.0.0.1', '::1', '200.10.10.2']);
+
+      mockUpstream.setRoute('/scenario-17-hostname-allowed', { statusCode: 200, body: { ok: true } });
+
+      const { fullKey } = await createTestApiKey(db, client.id);
+      const response = await request(hostnameApp.getHttpServer())
+        .get(`/gateway${route.slug}`)
+        .set('X-API-Key', fullKey);
+
+      expect(response.status).toBe(200);
+      expect(allowedHostnameResolverService.resolve).toHaveBeenCalledWith('api.cliente.com.br');
+    });
+
+    it('returns 403 IP_NOT_ALLOWED when the source IP is not among the resolved addresses', async () => {
+      const client = await createTestClient(db);
+      clientIds.push(client.id);
+
+      const route = await createTestGatewayRoute(db, client.id, {
+        destinationUrl: `${mockUpstream.url}/scenario-17-hostname-blocked`,
+        method: GatewayHttpMethod.GET,
+      });
+      await db.prisma.allowedIp.create({
+        data: { clientId: client.id, address: 'api.cliente.com.br', type: AllowedIpType.HOSTNAME },
+      });
+      allowedHostnameResolverService.resolve.mockResolvedValue(['200.10.10.2', '200.10.10.3']);
+
+      const { fullKey } = await createTestApiKey(db, client.id);
+      const response = await request(hostnameApp.getHttpServer())
+        .get(`/gateway${route.slug}`)
+        .set('X-API-Key', fullKey);
+
+      expect(response.status).toBe(403);
+      const body = response.body as GatewayErrorBody;
+      expect(body.code).toBe('IP_NOT_ALLOWED');
+    });
+
+    it('returns 403 IP_NOT_ALLOWED (fail closed) when the hostname cannot be resolved', async () => {
+      const client = await createTestClient(db);
+      clientIds.push(client.id);
+
+      const route = await createTestGatewayRoute(db, client.id, {
+        destinationUrl: `${mockUpstream.url}/scenario-17-hostname-dns-failure`,
+        method: GatewayHttpMethod.GET,
+      });
+      await db.prisma.allowedIp.create({
+        data: { clientId: client.id, address: 'api.cliente.com.br', type: AllowedIpType.HOSTNAME },
+      });
+      allowedHostnameResolverService.resolve.mockResolvedValue(null);
+
+      const { fullKey } = await createTestApiKey(db, client.id);
+      const response = await request(hostnameApp.getHttpServer())
+        .get(`/gateway${route.slug}`)
+        .set('X-API-Key', fullKey);
+
+      expect(response.status).toBe(403);
+      const body = response.body as GatewayErrorBody;
+      expect(body.code).toBe('IP_NOT_ALLOWED');
+    });
+
+    it('accepts the request via a matching IP entry even when an unrelated HOSTNAME entry fails to resolve', async () => {
+      const client = await createTestClient(db);
+      clientIds.push(client.id);
+
+      const route = await createTestGatewayRoute(db, client.id, {
+        destinationUrl: `${mockUpstream.url}/scenario-17-hostname-fallback-ip`,
+        method: GatewayHttpMethod.GET,
+      });
+      await db.prisma.allowedIp.createMany({
+        data: [
+          { clientId: client.id, address: 'api.cliente.com.br', type: AllowedIpType.HOSTNAME },
+          { clientId: client.id, address: '127.0.0.1', type: AllowedIpType.IPV4 },
+          { clientId: client.id, address: '::1', type: AllowedIpType.IPV6 },
+        ],
+      });
+      allowedHostnameResolverService.resolve.mockResolvedValue(null);
+
+      mockUpstream.setRoute('/scenario-17-hostname-fallback-ip', { statusCode: 200, body: { ok: true } });
+
+      const { fullKey } = await createTestApiKey(db, client.id);
+      const response = await request(hostnameApp.getHttpServer())
+        .get(`/gateway${route.slug}`)
+        .set('X-API-Key', fullKey);
+
+      expect(response.status).toBe(200);
     });
   });
 });

@@ -57,7 +57,8 @@ export const AllowedIpType = {
   IPV4: 'IPV4',
   IPV6: 'IPV6',
   CIDR_IPV4: 'CIDR_IPV4',
-  CIDR_IPV6: 'CIDR_IPV6'
+  CIDR_IPV6: 'CIDR_IPV6',
+  HOSTNAME: 'HOSTNAME'
 } as const
 
 export type AllowedIpType = (typeof AllowedIpType)[keyof typeof AllowedIpType]

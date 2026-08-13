@@ -7,10 +7,12 @@ import type { FastifyRequest } from 'fastify';
 import { errors as undiciErrors, request as undiciRequest } from 'undici';
 import type { Dispatcher } from 'undici';
 import {
+  AllowedIpType,
   RequestLogAuthenticationMode,
   RequestLogResult,
   RequestOrigin,
 } from '../../../generated/prisma/client';
+import { AllowedHostnameResolverService } from '../allowed-ips/allowed-hostname-resolver.service';
 import { PrismaService } from '../../database/prisma/prisma.service';
 import { hashApiKey } from '../api-keys/utils/api-key.util';
 import type { CreateRequestLogInput } from '../request-logs/interfaces/create-request-log.interface';
@@ -113,6 +115,7 @@ export class GatewayProxyService {
     private readonly configService: ConfigService,
     private readonly requestLogsService: RequestLogsService,
     private readonly trustedCaDispatcherService: TrustedCaDispatcherService,
+    private readonly allowedHostnameResolverService: AllowedHostnameResolverService,
   ) {}
 
   async handleGatewayRequest(request: FastifyRequest): Promise<ProxyResult | GatewayErrorResult> {
@@ -583,7 +586,32 @@ export class GatewayProxyService {
       return false;
     }
 
-    return allowedIps.some((allowedIp) => sourceIpMatchesAllowedIp(sourceIp, allowedIp));
+    const matches = await Promise.all(
+      allowedIps.map((allowedIp) => this.matchesAllowedIpEntry(sourceIp, allowedIp)),
+    );
+
+    return matches.some(Boolean);
+  }
+
+  /**
+   * IP/CIDR entries are matched synchronously exactly as before. HOSTNAME
+   * entries are resolved (cache-first) to their current public A/AAAA
+   * addresses and the source IP is compared against that list — forward
+   * DNS only, never a reverse lookup of `sourceIp`. A hostname that cannot
+   * be safely resolved contributes no match (fail closed) without
+   * affecting any other Allowed IP entry for the same client.
+   */
+  private async matchesAllowedIpEntry(
+    sourceIp: string,
+    allowedIp: { address: string; type: AllowedIpType },
+  ): Promise<boolean> {
+    if (allowedIp.type === AllowedIpType.HOSTNAME) {
+      const resolvedAddresses = await this.allowedHostnameResolverService.resolve(allowedIp.address);
+
+      return resolvedAddresses?.includes(sourceIp) ?? false;
+    }
+
+    return sourceIpMatchesAllowedIp(sourceIp, allowedIp);
   }
 
   private async loadRouteHeaders(gatewayRouteId: string): Promise<ResolvedRouteHeader[]> {

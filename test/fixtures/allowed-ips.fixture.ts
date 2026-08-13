@@ -23,3 +23,9 @@ export const cidrAllowedIpFixture: AllowedIp = buildAllowedIpFixture({
   address: '203.0.113.0/24',
   type: AllowedIpType.CIDR_IPV4,
 });
+
+export const hostnameAllowedIpFixture: AllowedIp = buildAllowedIpFixture({
+  id: 'allowed-ip-hostname-fixture-id',
+  address: 'api.cliente.com.br',
+  type: AllowedIpType.HOSTNAME,
+});

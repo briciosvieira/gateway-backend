@@ -15,6 +15,7 @@ import {
   RequestLogAuthenticationMode,
   RequestOrigin,
 } from '../../../generated/prisma/client';
+import type { AllowedHostnameResolverService } from '../../../src/modules/allowed-ips/allowed-hostname-resolver.service';
 import { generateApiKey, hashApiKey } from '../../../src/modules/api-keys/utils/api-key.util';
 import { GatewayProxyService } from '../../../src/modules/gateway-proxy/gateway-proxy.service';
 import { isGatewayErrorResult } from '../../../src/modules/gateway-proxy/interfaces/gateway-error.interface';
@@ -189,6 +190,7 @@ describe('GatewayProxyService', () => {
   let configService: { get: jest.Mock };
   let requestLogsService: { create: jest.Mock };
   let trustedCaDispatcherService: { getDispatcher: jest.Mock };
+  let allowedHostnameResolverService: { resolve: jest.Mock };
   const dispatcher = { kind: 'trusted-ca-dispatcher' };
 
   beforeEach(() => {
@@ -210,12 +212,14 @@ describe('GatewayProxyService', () => {
     trustedCaDispatcherService = {
       getDispatcher: jest.fn().mockResolvedValue(dispatcher),
     };
+    allowedHostnameResolverService = { resolve: jest.fn().mockResolvedValue(null) };
 
     service = new GatewayProxyService(
       prisma,
       configService as unknown as ConfigService,
       requestLogsService as unknown as RequestLogsService,
       trustedCaDispatcherService as unknown as TrustedCaDispatcherService,
+      allowedHostnameResolverService as unknown as AllowedHostnameResolverService,
     );
   });
 
@@ -435,6 +439,83 @@ describe('GatewayProxyService', () => {
         expect(result.code).toBe('IP_NOT_ALLOWED');
         expect(result.statusCode).toBe(403);
       }
+    });
+
+    describe('HOSTNAME entries', () => {
+      const HOSTNAME = 'api.cliente.com.br';
+
+      it('allows the request when the source IP is among the resolved addresses', async () => {
+        setupResolutionMocks(prisma, {
+          allowedIps: [{ address: HOSTNAME, type: AllowedIpType.HOSTNAME }],
+        });
+        allowedHostnameResolverService.resolve.mockResolvedValue([
+          '177.207.247.1',
+          SOURCE_IP,
+          '200.10.10.2',
+        ]);
+        mockUpstreamSuccess();
+
+        const result = await service.handleGatewayRequest(buildValidRequest({ ip: SOURCE_IP }));
+
+        expect(isGatewayErrorResult(result)).toBe(false);
+        expect(allowedHostnameResolverService.resolve).toHaveBeenCalledWith(HOSTNAME);
+      });
+
+      it('returns IP_NOT_ALLOWED when the source IP is not among the resolved addresses', async () => {
+        setupResolutionMocks(prisma, {
+          allowedIps: [{ address: HOSTNAME, type: AllowedIpType.HOSTNAME }],
+        });
+        allowedHostnameResolverService.resolve.mockResolvedValue(['200.10.10.2', '200.10.10.3']);
+
+        const result = await service.handleGatewayRequest(buildValidRequest({ ip: SOURCE_IP }));
+
+        expect(isGatewayErrorResult(result)).toBe(true);
+        if (isGatewayErrorResult(result)) {
+          expect(result.code).toBe('IP_NOT_ALLOWED');
+        }
+      });
+
+      it('returns IP_NOT_ALLOWED (fail closed) when the hostname cannot be resolved', async () => {
+        setupResolutionMocks(prisma, {
+          allowedIps: [{ address: HOSTNAME, type: AllowedIpType.HOSTNAME }],
+        });
+        allowedHostnameResolverService.resolve.mockResolvedValue(null);
+
+        const result = await service.handleGatewayRequest(buildValidRequest({ ip: SOURCE_IP }));
+
+        expect(isGatewayErrorResult(result)).toBe(true);
+        if (isGatewayErrorResult(result)) {
+          expect(result.code).toBe('IP_NOT_ALLOWED');
+        }
+      });
+
+      it('allows the request via a matching IP entry even when a HOSTNAME entry fails to resolve', async () => {
+        setupResolutionMocks(prisma, {
+          allowedIps: [
+            { address: HOSTNAME, type: AllowedIpType.HOSTNAME },
+            { address: SOURCE_IP, type: AllowedIpType.IPV4 },
+          ],
+        });
+        allowedHostnameResolverService.resolve.mockResolvedValue(null);
+        mockUpstreamSuccess();
+
+        const result = await service.handleGatewayRequest(buildValidRequest({ ip: SOURCE_IP }));
+
+        expect(isGatewayErrorResult(result)).toBe(false);
+      });
+
+      it('accepts an IPv6 address resolved for the hostname', async () => {
+        const ipv6Source = '2001:db8::abcd';
+        setupResolutionMocks(prisma, {
+          allowedIps: [{ address: HOSTNAME, type: AllowedIpType.HOSTNAME }],
+        });
+        allowedHostnameResolverService.resolve.mockResolvedValue(['2001:db8::abcd']);
+        mockUpstreamSuccess();
+
+        const result = await service.handleGatewayRequest(buildValidRequest({ ip: ipv6Source }));
+
+        expect(isGatewayErrorResult(result)).toBe(false);
+      });
     });
   });
 

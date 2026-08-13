@@ -2,6 +2,13 @@
 
 ## Completed
 
+- Added `HOSTNAME` support to Allowed IPs (forward-DNS allowed sources), migration `20260813125514_add_allowed_ip_hostname_type`
+- New `AllowedHostnameResolverService` (resolve4/resolve6, public-only filter, 30-minute default TTL via `ALLOWED_HOSTNAME_DNS_TTL_MINUTES`, in-flight dedup, fail-closed, no stale-if-error)
+- `GatewayProxyService.validateAllowedIp` now checks `HOSTNAME` entries against the resolver's cached addresses, alongside the untouched IP/CIDR matching
+- `AllowedIpsService` invalidates the hostname cache on address change/deactivate/delete
+- `parseAllowedIpAddress` gained a hostname fallback branch (`hostname-address.util.ts`) rejecting protocol/path/port/query/wildcards; IP/CIDR parsing paths unchanged
+- `CreateAllowedIpDto`/`UpdateAllowedIpDto.address` max length raised to 253 to fit RFC hostnames
+- `createTestApp()` test helper gained an optional `overrides` parameter (backward compatible) so integration tests can swap in a controllable `AllowedHostnameResolverService` instead of hitting real DNS
 - Added optional per-route `requiresApiKey` (default `true`) to `GatewayRoute`, migration `20260810143920_add_gateway_route_requires_api_key`
 - Reused the existing `GatewayProxyService` decision order (route already resolved before the API Key check) to branch: `requiresApiKey=true` keeps the exact previous behavior; `requiresApiKey=false` skips only the mandatory-key check, still validating a voluntarily sent key
 - Added ADMIN-only authorization for setting/changing `requiresApiKey=false` in `GatewayRoutesService` (`create`/`update`), with `403 REQUIRES_API_KEY_ADMIN_ONLY` for non-ADMIN attempts
@@ -79,6 +86,8 @@
 
 ## Notes
 
+- Allowed IP `HOSTNAME` live-verified against real DNS (`one.one.one.one`) on the local dev app: resolved 4 public addresses, correctly returned `403 IP_NOT_ALLOWED` since the request's real source (loopback) is not among them, and a second immediate request reused the cache (only one "Allowed hostname resolved" log line for both requests) — full IP-matches-and-passes path is covered by mocked unit/integration tests instead, per the task's own fallback allowance, since spoofing a real external source IP isn't reproducible in this environment
+- A hostname needing to resolve to an internal/private IP is not supported in this version (see BACKEND_CONTRACTS.md) — flagged as a known trade-off, not silently worked around
 - `requiresApiKey=false` live-verified end-to-end against the local dev database/app: true→401, false→bypasses the key check while Allowed IP/Client/Route checks kept blocking as expected, false→reaches the upstream stage, then back to true→401 again
 - `.ai/PROJECT_CONTEXT.md` and `.ai/BACKEND_CONTRACTS.md` were not present at task start
 - Trusted CAs admin is complete on backend

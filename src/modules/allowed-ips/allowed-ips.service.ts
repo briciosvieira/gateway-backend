@@ -1,5 +1,5 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import { AuditAction, AuditEntity, Prisma } from '../../../generated/prisma/client';
+import { AllowedIpType, AuditAction, AuditEntity, Prisma } from '../../../generated/prisma/client';
 import type {
   ClientResourceSummarySortDirection,
   ClientResourceSummaryStatus,
@@ -8,6 +8,7 @@ import type { RequestContext } from '../../common/interfaces/request-context.int
 import { PrismaService } from '../../database/prisma/prisma.service';
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
 import type { AuthenticatedUser } from '../auth/interfaces/authenticated-user.interface';
+import { AllowedHostnameResolverService } from './allowed-hostname-resolver.service';
 import type { ChangeAllowedIpStatusDto } from './dto/change-allowed-ip-status.dto';
 import type { CreateAllowedIpDto } from './dto/create-allowed-ip.dto';
 import type {
@@ -67,6 +68,7 @@ export class AllowedIpsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly auditLogsService: AuditLogsService,
+    private readonly allowedHostnameResolverService: AllowedHostnameResolverService,
   ) {}
 
   async create(
@@ -334,6 +336,14 @@ export class AllowedIpsService {
       description: `Allowed IP ${updatedAllowedIp.address} was updated.`,
     });
 
+    if (
+      currentAllowedIp.type === AllowedIpType.HOSTNAME &&
+      normalizedAddress !== undefined &&
+      normalizedAddress !== currentAllowedIp.address
+    ) {
+      this.allowedHostnameResolverService.invalidate(currentAllowedIp.address);
+    }
+
     return updatedAllowedIp;
   }
 
@@ -381,6 +391,10 @@ export class AllowedIpsService {
       }.`,
     });
 
+    if (!updatedAllowedIp.active && updatedAllowedIp.type === AllowedIpType.HOSTNAME) {
+      this.allowedHostnameResolverService.invalidate(updatedAllowedIp.address);
+    }
+
     return updatedAllowedIp;
   }
 
@@ -408,6 +422,10 @@ export class AllowedIpsService {
     });
 
     await this.prisma.allowedIp.delete({ where: { id: allowedIpId } });
+
+    if (allowedIp.type === AllowedIpType.HOSTNAME) {
+      this.allowedHostnameResolverService.invalidate(allowedIp.address);
+    }
   }
 
   private async getClientOrThrow(clientId: string) {

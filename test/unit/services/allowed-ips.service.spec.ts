@@ -1,9 +1,12 @@
 import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
+import { AllowedIpType } from '../../../generated/prisma/client';
 import { AllowedIpsService } from '../../../src/modules/allowed-ips/allowed-ips.service';
+import type { AllowedHostnameResolverService } from '../../../src/modules/allowed-ips/allowed-hostname-resolver.service';
 import type { AuditLogsService } from '../../../src/modules/audit-logs/audit-logs.service';
 import {
   activeAllowedIpFixture,
   buildAllowedIpFixture,
+  hostnameAllowedIpFixture,
 } from '../../fixtures/allowed-ips.fixture';
 import { activeClientFixture, inactiveClientFixture } from '../../fixtures/clients.fixture';
 import { authenticatedAdminFixture } from '../../fixtures/users.fixture';
@@ -18,14 +21,20 @@ describe('AllowedIpsService', () => {
   let service: AllowedIpsService;
   let prisma: MockPrismaService;
   let auditLogsService: { create: jest.Mock };
+  let allowedHostnameResolverService: { invalidate: jest.Mock };
 
   const requestContext = { sourceIp: '203.0.113.10', requestId: 'req-1' };
 
   beforeEach(() => {
     prisma = createMockPrismaService();
     auditLogsService = { create: jest.fn().mockResolvedValue(undefined) };
+    allowedHostnameResolverService = { invalidate: jest.fn() };
 
-    service = new AllowedIpsService(prisma, auditLogsService as unknown as AuditLogsService);
+    service = new AllowedIpsService(
+      prisma,
+      auditLogsService as unknown as AuditLogsService,
+      allowedHostnameResolverService as unknown as AllowedHostnameResolverService,
+    );
   });
 
   afterEach(() => {
@@ -83,11 +92,32 @@ describe('AllowedIpsService', () => {
       await expect(
         service.create(authenticatedAdminFixture, requestContext, {
           clientId: activeClientFixture.id,
-          address: 'not-an-ip',
+          address: 'not an ip or hostname!',
         }),
-      ).rejects.toThrow('The provided IP address or CIDR network is invalid.');
+      ).rejects.toThrow('The provided IP address, CIDR network or hostname is invalid.');
 
       expect(prisma.allowedIp.create).not.toHaveBeenCalled();
+    });
+
+    it('creates an allowed hostname for an active client', async () => {
+      prisma.client.findUnique.mockResolvedValue(activeClientFixture);
+      prisma.allowedIp.findUnique.mockResolvedValue(null);
+      prisma.allowedIp.create.mockResolvedValue(hostnameAllowedIpFixture);
+
+      const result = await service.create(authenticatedAdminFixture, requestContext, {
+        clientId: activeClientFixture.id,
+        address: 'API.Cliente.COM.br',
+      });
+
+      expect(result).toEqual(hostnameAllowedIpFixture);
+      expect(prisma.allowedIp.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            address: 'api.cliente.com.br',
+            type: AllowedIpType.HOSTNAME,
+          }),
+        }),
+      );
     });
 
     it('throws ConflictException when the address is already allowed for the client', async () => {
@@ -321,6 +351,51 @@ describe('AllowedIpsService', () => {
         }),
       ).rejects.toThrow(NotFoundException);
     });
+
+    it('invalidates the hostname cache when a HOSTNAME address is changed to something else', async () => {
+      prisma.allowedIp.findUnique
+        .mockResolvedValueOnce(hostnameAllowedIpFixture)
+        .mockResolvedValueOnce(null);
+      prisma.allowedIp.update.mockResolvedValue({
+        ...hostnameAllowedIpFixture,
+        address: 'novo.cliente.com.br',
+      });
+
+      await service.update(authenticatedAdminFixture, requestContext, hostnameAllowedIpFixture.id, {
+        address: 'novo.cliente.com.br',
+      });
+
+      expect(allowedHostnameResolverService.invalidate).toHaveBeenCalledWith(
+        hostnameAllowedIpFixture.address,
+      );
+    });
+
+    it('does not invalidate any cache when a HOSTNAME address is updated to the same value', async () => {
+      prisma.allowedIp.findUnique.mockResolvedValue(hostnameAllowedIpFixture);
+      prisma.allowedIp.update.mockResolvedValue(hostnameAllowedIpFixture);
+
+      await service.update(authenticatedAdminFixture, requestContext, hostnameAllowedIpFixture.id, {
+        address: hostnameAllowedIpFixture.address,
+      });
+
+      expect(allowedHostnameResolverService.invalidate).not.toHaveBeenCalled();
+    });
+
+    it('does not touch the hostname cache when updating a non-HOSTNAME entry', async () => {
+      prisma.allowedIp.findUnique
+        .mockResolvedValueOnce(activeAllowedIpFixture)
+        .mockResolvedValueOnce(null);
+      prisma.allowedIp.update.mockResolvedValue({
+        ...activeAllowedIpFixture,
+        address: '203.0.113.99',
+      });
+
+      await service.update(authenticatedAdminFixture, requestContext, activeAllowedIpFixture.id, {
+        address: '203.0.113.99',
+      });
+
+      expect(allowedHostnameResolverService.invalidate).not.toHaveBeenCalled();
+    });
   });
 
   describe('changeStatus', () => {
@@ -383,6 +458,38 @@ describe('AllowedIpsService', () => {
       expect(result.active).toBe(false);
       expect(auditLogsService.create).toHaveBeenCalledTimes(1);
     });
+
+    it('invalidates the hostname cache when deactivating a HOSTNAME entry', async () => {
+      const currentAllowedIp = { ...hostnameAllowedIpFixture, active: true, client: activeClientFixture };
+      prisma.allowedIp.findUnique.mockResolvedValue(currentAllowedIp);
+      prisma.allowedIp.update.mockResolvedValue({ ...currentAllowedIp, active: false });
+
+      await service.changeStatus(
+        authenticatedAdminFixture,
+        requestContext,
+        hostnameAllowedIpFixture.id,
+        { active: false },
+      );
+
+      expect(allowedHostnameResolverService.invalidate).toHaveBeenCalledWith(
+        hostnameAllowedIpFixture.address,
+      );
+    });
+
+    it('does not invalidate any cache when activating a HOSTNAME entry (resolved on demand)', async () => {
+      const currentAllowedIp = { ...hostnameAllowedIpFixture, active: false, client: activeClientFixture };
+      prisma.allowedIp.findUnique.mockResolvedValue(currentAllowedIp);
+      prisma.allowedIp.update.mockResolvedValue({ ...currentAllowedIp, active: true });
+
+      await service.changeStatus(
+        authenticatedAdminFixture,
+        requestContext,
+        hostnameAllowedIpFixture.id,
+        { active: true },
+      );
+
+      expect(allowedHostnameResolverService.invalidate).not.toHaveBeenCalled();
+    });
   });
 
   describe('remove', () => {
@@ -434,6 +541,26 @@ describe('AllowedIpsService', () => {
 
       expect(prisma.allowedIp.delete).not.toHaveBeenCalled();
       expect(auditLogsService.create).not.toHaveBeenCalled();
+    });
+
+    it('invalidates the hostname cache when deleting a HOSTNAME entry', async () => {
+      prisma.allowedIp.findUnique.mockResolvedValue(hostnameAllowedIpFixture);
+      prisma.allowedIp.delete.mockResolvedValue(hostnameAllowedIpFixture);
+
+      await service.remove(authenticatedAdminFixture, requestContext, hostnameAllowedIpFixture.id);
+
+      expect(allowedHostnameResolverService.invalidate).toHaveBeenCalledWith(
+        hostnameAllowedIpFixture.address,
+      );
+    });
+
+    it('does not touch the hostname cache when deleting a non-HOSTNAME entry', async () => {
+      prisma.allowedIp.findUnique.mockResolvedValue(activeAllowedIpFixture);
+      prisma.allowedIp.delete.mockResolvedValue(activeAllowedIpFixture);
+
+      await service.remove(authenticatedAdminFixture, requestContext, activeAllowedIpFixture.id);
+
+      expect(allowedHostnameResolverService.invalidate).not.toHaveBeenCalled();
     });
   });
 });

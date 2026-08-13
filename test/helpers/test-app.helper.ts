@@ -34,13 +34,31 @@ const neverBlockingThrottlerStorage: ThrottlerStorage = {
     }),
 };
 
-export async function createTestApp(): Promise<NestFastifyApplication> {
-  const moduleRef: TestingModule = await Test.createTestingModule({
+export interface TestAppProviderOverride {
+  provide: unknown;
+  useValue: unknown;
+}
+
+/**
+ * `overrides` lets a specific suite replace a real provider (e.g. a DNS
+ * resolver) with a controllable test double, on top of the throttler
+ * override every suite already gets. Existing callers passing no argument
+ * are unaffected.
+ */
+export async function createTestApp(
+  overrides: TestAppProviderOverride[] = [],
+): Promise<NestFastifyApplication> {
+  let moduleBuilder = Test.createTestingModule({
     imports: [AppModule],
   })
     .overrideProvider(getStorageToken())
-    .useValue(neverBlockingThrottlerStorage)
-    .compile();
+    .useValue(neverBlockingThrottlerStorage);
+
+  for (const override of overrides) {
+    moduleBuilder = moduleBuilder.overrideProvider(override.provide).useValue(override.useValue);
+  }
+
+  const moduleRef: TestingModule = await moduleBuilder.compile();
 
   const app = moduleRef.createNestApplication<NestFastifyApplication>(
     new FastifyAdapter(),

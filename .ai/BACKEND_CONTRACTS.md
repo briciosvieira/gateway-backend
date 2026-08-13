@@ -127,6 +127,48 @@
 - `authenticationMode` reflects the route's policy, not whether a key happened to be sent — a voluntary, valid key on a `requiresApiKey=false` route still logs `authenticationMode=NONE` (with `apiKeyId` populated)
 - `GET /request-logs` accepts an optional `authenticationMode` filter
 
+## Allowed IPs — HOSTNAME (forward-DNS) support
+
+- `AllowedIpType` gained a fifth value: `HOSTNAME` (alongside `IPV4`, `IPV6`, `CIDR_IPV4`, `CIDR_IPV6`)
+- Migration: `20260813125514_add_allowed_ip_hostname_type` (additive `ALTER TYPE ... ADD VALUE`, no data change)
+- `address` still holds the raw value; for `HOSTNAME` it is the bare hostname (trim + lowercase), e.g. `api.cliente.com.br`
+- `parseAllowedIpAddress` (`src/modules/allowed-ips/utils/ip-address.util.ts`) tries CIDR, then plain IP, then falls back to `parseAllowedHostname` (`utils/hostname-address.util.ts`) — IP/CIDR parsing and error paths are otherwise unchanged
+- Hostname validation rejects: protocol (`http://`/`https://`), path, port, query string, whitespace, wildcards (`*`), consecutive/leading/trailing dots, single-label values (no dot), and a purely-numeric top-level label (heuristic for a malformed IP typed as if it were a hostname)
+- `CreateAllowedIpDto`/`UpdateAllowedIpDto.address` max length raised from 100 to 253 (RFC hostname limit); IP/CIDR behavior unchanged
+
+### Endpoints
+
+- No new endpoints — `/allowed-ips` (create/list/get/update/status/delete) and `/allowed-ips/clients-summary` are unchanged; `HOSTNAME` is just another `type` value returned/filterable like the others
+- `GET /allowed-ips?type=HOSTNAME` works automatically since the DTO's `type` filter already binds to the Prisma enum
+- Summaries count a `HOSTNAME` row exactly like any other Allowed IP (`active=true` → counts as active); DNS resolution health is never factored into the summary's active/inactive counters
+
+### DNS resolution — `AllowedHostnameResolverService`
+
+- New, isolated service: `src/modules/allowed-ips/allowed-hostname-resolver.service.ts`, provided/exported by `AllowedIpsModule`; `GatewayProxyModule` imports `AllowedIpsModule` to consume it (no circular dependency introduced)
+- Forward DNS only (`node:dns/promises` `resolve4`/`resolve6`, run in parallel, per-lookup 4s timeout) — **never** reverse DNS on the request's source IP, and never derived from the `Host` header or any client-supplied hostname
+- All A + AAAA records are combined (DNS round-robin / multi-record hostnames fully supported); results are deduplicated
+- Resolved addresses are filtered to public/unicast only (`ipaddr.parse(ip).range() === 'unicast'`) — loopback, RFC1918/RFC4193, link-local, multicast, unspecified, and other reserved ranges (including RFC5737 documentation ranges) are dropped. **This restriction applies only to `HOSTNAME` entries** — direct IP/CIDR entries are completely unaffected and may still be internal/private as before
+- In-memory cache keyed by hostname (global, not per-client — two clients registering the same hostname share one cache entry/DNS cost, which is safe since the resolved IP set doesn't depend on which client registered it)
+- TTL: default 30 minutes, overridable via `ALLOWED_HOSTNAME_DNS_TTL_MINUTES` (valid range 5–1440; out-of-range or missing falls back to the 30-minute default) — same config pattern as `REQUEST_LOG_BODY_MAX_BYTES` in `RequestLogsService`
+- Concurrent resolution requests for the same hostname are deduplicated via an in-flight-promise map — 100 simultaneous requests against an expired hostname trigger exactly one DNS lookup
+- **Fail closed, no stale-if-error window (explicit product decision for this first version)**: if a hostname has never resolved successfully, or its cache has expired and the refresh attempt fails, `resolve()` returns `null` and that entry contributes zero matches — it never falls back to a previously-cached (now-expired) list. A `null` result from one `HOSTNAME` entry does not affect any other Allowed IP entry for the same client (IP/CIDR entries, or other hostnames, are still evaluated independently)
+- Cache invalidation (`invalidate(hostname)`): called by `AllowedIpsService` when a `HOSTNAME` entry's address changes (old hostname invalidated), is deactivated (invalidated; reactivation resolves on demand — no eager re-resolve), or is deleted. Creating a new hostname, or reactivating one, never needs invalidation
+- Observability: logs `Allowed hostname resolved. hostname=<x> addressesCount=<n>` on success and a warning with the failure reason on failure — no per-request logging, no cache contents in Audit Log
+
+### Gateway Proxy matching (`GatewayProxyService.validateAllowedIp`)
+
+- Unchanged for `IPV4`/`IPV6`/`CIDR_IPV4`/`CIDR_IPV6` — still handled by `sourceIpMatchesAllowedIp` exactly as before
+- For `HOSTNAME`, the source IP is compared against `AllowedHostnameResolverService.resolve(address)`'s result (`resolvedAddresses.includes(sourceIp)`); a `null` result means no match from that entry, not a block of the whole request — other entries can still grant access
+- `sourceIp` resolution itself (trusted proxy / `x-forwarded-for` handling) is completely untouched
+
+### Audit
+
+- Unchanged — `HOSTNAME` create/update/status-change/delete go through the exact same `AuditLogsService.create()` calls as IP/CIDR entries; no new audit action, no DNS-cache content ever written to an audit log, no audit entry generated by automatic background DNS refreshes (there are none — resolution only happens lazily on a Gateway Proxy request)
+
+### Known trade-off reported, not implemented
+
+- A hostname that legitimately needs to resolve to an internal/private IP (e.g. an internal-only client hostname) is **not supported** — such a hostname will resolve to zero usable addresses and the entry will fail closed (blocking, never silently allowing). If a real use case needs this, it requires a deliberate follow-up decision (e.g. a per-entry opt-out flag), not a default relaxation of the public-only filter
+
 ## Request Logs
 
 - `RequestLog.attemptedAt` is required and persisted as UTC

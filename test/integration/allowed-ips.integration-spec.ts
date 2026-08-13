@@ -196,6 +196,65 @@ describe('Allowed IPs (integration)', () => {
       const body = response.body as ApiErrorResponse;
       expect(body.success).toBe(false);
     });
+
+    it('creates an allowed HOSTNAME entry', async () => {
+      const client = await createTestClient(db);
+      createdClientIds.push(client.id);
+
+      const payload: CreateAllowedIpDto = {
+        address: 'api.cliente.com.br',
+        clientId: client.id,
+      };
+
+      const response = await authorizedPost(app, '/api/v1/allowed-ips', adminToken, payload);
+
+      expect(response.status).toBe(201);
+
+      const body = response.body as ApiResponse<AllowedIpResource>;
+      expect(body.data.address).toBe('api.cliente.com.br');
+      expect(body.data.type).toBe(AllowedIpType.HOSTNAME);
+
+      createdAllowedIpIds.push(body.data.id);
+    });
+
+    it('normalizes a HOSTNAME to lowercase', async () => {
+      const client = await createTestClient(db);
+      createdClientIds.push(client.id);
+
+      const payload: CreateAllowedIpDto = {
+        address: 'API.Cliente.COM.br',
+        clientId: client.id,
+      };
+
+      const response = await authorizedPost(app, '/api/v1/allowed-ips', adminToken, payload);
+
+      expect(response.status).toBe(201);
+
+      const body = response.body as ApiResponse<AllowedIpResource>;
+      expect(body.data.address).toBe('api.cliente.com.br');
+
+      createdAllowedIpIds.push(body.data.id);
+    });
+
+    it.each([
+      ['https://api.cliente.com.br', 'protocol'],
+      ['http://api.cliente.com.br', 'protocol'],
+      ['api.cliente.com.br/webhook', 'path'],
+      ['api.cliente.com.br:443', 'port'],
+      ['api.cliente.com.br?token=abc', 'query string'],
+    ])('returns 400 when the hostname includes a %s (%s)', async (address) => {
+      const client = await createTestClient(db);
+      createdClientIds.push(client.id);
+
+      const payload: CreateAllowedIpDto = { address, clientId: client.id };
+
+      const response = await authorizedPost(app, '/api/v1/allowed-ips', adminToken, payload);
+
+      expect(response.status).toBe(400);
+
+      const body = response.body as ApiErrorResponse;
+      expect(body.success).toBe(false);
+    });
   });
 
   describe('GET /allowed-ips', () => {
@@ -362,6 +421,36 @@ describe('Allowed IPs (integration)', () => {
 
       const body = response.body as ApiResponse<AllowedIpResource>;
       expect(body.data.address).toBe(newAddress);
+    });
+
+    it('updates a HOSTNAME allowed source to a new hostname', async () => {
+      const client = await createTestClient(db);
+      createdClientIds.push(client.id);
+
+      const allowedIp = await db.prisma.allowedIp.create({
+        data: {
+          clientId: client.id,
+          address: 'old.cliente.com.br',
+          type: AllowedIpType.HOSTNAME,
+          active: true,
+        },
+      });
+      createdAllowedIpIds.push(allowedIp.id);
+
+      const payload: UpdateAllowedIpDto = { address: 'novo.cliente.com.br' };
+
+      const response = await authorizedPatch(
+        app,
+        `/api/v1/allowed-ips/${allowedIp.id}`,
+        adminToken,
+        payload,
+      );
+
+      expect(response.status).toBe(200);
+
+      const body = response.body as ApiResponse<AllowedIpResource>;
+      expect(body.data.address).toBe('novo.cliente.com.br');
+      expect(body.data.type).toBe(AllowedIpType.HOSTNAME);
     });
   });
 
