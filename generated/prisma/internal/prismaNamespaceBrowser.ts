@@ -200,6 +200,7 @@ export const GatewayRouteScalarFieldEnum = {
   retryCount: 'retryCount',
   active: 'active',
   requiresApiKey: 'requiresApiKey',
+  requiresAllowedIp: 'requiresAllowedIp',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const

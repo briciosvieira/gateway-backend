@@ -99,4 +99,14 @@ export class CreateGatewayRouteDto {
   @IsOptional()
   @IsBoolean()
   requiresApiKey?: boolean = true;
+
+  @ApiPropertyOptional({
+    example: true,
+    default: true,
+    description:
+      'Whether this route requires the source IP/hostname to match an active Allowed IP entry for the client. Defaults to true.',
+  })
+  @IsOptional()
+  @IsBoolean()
+  requiresAllowedIp?: boolean = true;
 }

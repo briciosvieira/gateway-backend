@@ -795,4 +795,187 @@ describe('Gateway Proxy (integration)', () => {
       expect(response.status).toBe(200);
     });
   });
+
+  describe('18. Gateway route with requiresAllowedIp=false', () => {
+    const clientIds: string[] = [];
+
+    afterAll(async () => {
+      await cleanupClients(db, clientIds);
+    });
+
+    it('reaches the upstream without any Allowed IP registered for the client', async () => {
+      const client = await createTestClient(db);
+      clientIds.push(client.id);
+
+      const { fullKey } = await createTestApiKey(db, client.id);
+      const route = await createTestGatewayRoute(db, client.id, {
+        destinationUrl: `${mockUpstream.url}/scenario-18-no-allowed-ip`,
+        method: GatewayHttpMethod.GET,
+        requiresAllowedIp: false,
+      });
+      // No Allowed IP registered for this client on purpose.
+
+      mockUpstream.setRoute('/scenario-18-no-allowed-ip', {
+        statusCode: 200,
+        body: { ok: true },
+      });
+
+      const requestId = `req-scenario-18-${Date.now()}`;
+      const response = await request(app.getHttpServer())
+        .get(`/gateway${route.slug}`)
+        .set('X-Request-ID', requestId)
+        .set('X-API-Key', fullKey);
+
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual({ ok: true });
+    });
+
+    it('still returns 401 API_KEY_REQUIRED when the header is missing, proving API Key is not skipped', async () => {
+      const client = await createTestClient(db);
+      clientIds.push(client.id);
+
+      const route = await createTestGatewayRoute(db, client.id, {
+        destinationUrl: `${mockUpstream.url}/scenario-18-api-key-required`,
+        method: GatewayHttpMethod.GET,
+        requiresAllowedIp: false,
+      });
+
+      const response = await request(app.getHttpServer()).get(`/gateway${route.slug}`);
+
+      expect(response.status).toBe(401);
+      const body = response.body as GatewayErrorBody;
+      expect(body.code).toBe('API_KEY_REQUIRED');
+    });
+
+    it('still returns 403 CLIENT_INACTIVE when the client is inactive', async () => {
+      const client = await createTestClient(db, { active: false });
+      clientIds.push(client.id);
+
+      const route = await createTestGatewayRoute(db, client.id, {
+        destinationUrl: `${mockUpstream.url}/scenario-18-client-inactive`,
+        method: GatewayHttpMethod.GET,
+        requiresAllowedIp: false,
+      });
+
+      const response = await request(app.getHttpServer())
+        .get(`/gateway${route.slug}`)
+        .set('X-API-Key', 'irrelevant-since-client-inactive-is-checked-first');
+
+      expect(response.status).toBe(403);
+      const body = response.body as GatewayErrorBody;
+      expect(body.code).toBe('CLIENT_INACTIVE');
+    });
+  });
+
+  describe('19. Security matrix — requiresApiKey x requiresAllowedIp', () => {
+    const clientIds: string[] = [];
+
+    afterAll(async () => {
+      await cleanupClients(db, clientIds);
+    });
+
+    it('API Key ON + Allowed IP ON: blocks an allowed-origin request without an API Key', async () => {
+      const client = await createTestClient(db);
+      clientIds.push(client.id);
+
+      const route = await createTestGatewayRoute(db, client.id, {
+        destinationUrl: `${mockUpstream.url}/scenario-19-both-on-no-key`,
+        method: GatewayHttpMethod.GET,
+        requiresApiKey: true,
+        requiresAllowedIp: true,
+      });
+      await allowLoopbackAddresses(db, client.id);
+
+      const response = await request(app.getHttpServer()).get(`/gateway${route.slug}`);
+
+      expect(response.status).toBe(401);
+      const body = response.body as GatewayErrorBody;
+      expect(body.code).toBe('API_KEY_REQUIRED');
+    });
+
+    it('API Key ON + Allowed IP ON: blocks a valid API Key from a disallowed origin', async () => {
+      const client = await createTestClient(db);
+      clientIds.push(client.id);
+
+      const { fullKey } = await createTestApiKey(db, client.id);
+      const route = await createTestGatewayRoute(db, client.id, {
+        destinationUrl: `${mockUpstream.url}/scenario-19-both-on-bad-ip`,
+        method: GatewayHttpMethod.GET,
+        requiresApiKey: true,
+        requiresAllowedIp: true,
+      });
+      // No Allowed IP registered — loopback is not authorized.
+
+      const response = await request(app.getHttpServer())
+        .get(`/gateway${route.slug}`)
+        .set('X-API-Key', fullKey);
+
+      expect(response.status).toBe(403);
+      const body = response.body as GatewayErrorBody;
+      expect(body.code).toBe('IP_NOT_ALLOWED');
+    });
+
+    it('API Key ON + Allowed IP OFF: a valid API Key reaches the upstream from any origin', async () => {
+      const client = await createTestClient(db);
+      clientIds.push(client.id);
+
+      const { fullKey } = await createTestApiKey(db, client.id);
+      const route = await createTestGatewayRoute(db, client.id, {
+        destinationUrl: `${mockUpstream.url}/scenario-19-key-only`,
+        method: GatewayHttpMethod.GET,
+        requiresApiKey: true,
+        requiresAllowedIp: false,
+      });
+      // No Allowed IP registered on purpose — must not matter here.
+
+      mockUpstream.setRoute('/scenario-19-key-only', { statusCode: 200, body: { ok: true } });
+
+      const response = await request(app.getHttpServer())
+        .get(`/gateway${route.slug}`)
+        .set('X-API-Key', fullKey);
+
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual({ ok: true });
+    });
+
+    it('API Key OFF + Allowed IP ON: no API Key needed, but the origin must be authorized', async () => {
+      const client = await createTestClient(db);
+      clientIds.push(client.id);
+
+      const route = await createTestGatewayRoute(db, client.id, {
+        destinationUrl: `${mockUpstream.url}/scenario-19-ip-only`,
+        method: GatewayHttpMethod.GET,
+        requiresApiKey: false,
+        requiresAllowedIp: true,
+      });
+      await allowLoopbackAddresses(db, client.id);
+
+      mockUpstream.setRoute('/scenario-19-ip-only', { statusCode: 200, body: { ok: true } });
+
+      const response = await request(app.getHttpServer()).get(`/gateway${route.slug}`);
+
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual({ ok: true });
+    });
+
+    it('API Key OFF + Allowed IP OFF: reaches the upstream with no credential and no Allowed IP registered', async () => {
+      const client = await createTestClient(db);
+      clientIds.push(client.id);
+
+      const route = await createTestGatewayRoute(db, client.id, {
+        destinationUrl: `${mockUpstream.url}/scenario-19-neither`,
+        method: GatewayHttpMethod.GET,
+        requiresApiKey: false,
+        requiresAllowedIp: false,
+      });
+      // No Allowed IP registered on purpose — must not matter here.
+
+      mockUpstream.setRoute('/scenario-19-neither', { statusCode: 200, body: { ok: true } });
+
+      const response = await request(app.getHttpServer()).get(`/gateway${route.slug}`);
+
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual({ ok: true });
+    });
+  });
 });

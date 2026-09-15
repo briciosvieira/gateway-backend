@@ -80,20 +80,18 @@
 - No PEM download endpoint exists
 - No endpoint returns raw PEM
 
-## Gateway Routes — Optional API Key requirement
+## Gateway Routes — Per-route security matrix (`requiresApiKey` x `requiresAllowedIp`)
 
-- Prisma field: `GatewayRoute.requiresApiKey Boolean @default(true)`
-- Migration: `20260810143920_add_gateway_route_requires_api_key` (additive, backfills existing rows to `true`; also adds `RequestLog.authenticationMode`)
-- Default is always `true`; no existing route was changed to `false` by the migration
-- `requiresApiKey=false` only skips the X-API-Key requirement — every other validation still runs unchanged:
-  - Gateway Route resolution and `active` status
-  - Client `active` status
-  - Allowed IP
-  - Route Headers
-  - TLS / trusted CA validation
-  - timeout / retry / upstream forwarding
-  - Request Logs / Audit Logs
-- There is no global switch — the flag is exclusively per Gateway Route
+- Prisma fields: `GatewayRoute.requiresApiKey Boolean @default(true)`, `GatewayRoute.requiresAllowedIp Boolean @default(true)`
+- Migrations: `20260810143920_add_gateway_route_requires_api_key` (also adds `RequestLog.authenticationMode`), `20260915115758_add_gateway_route_requires_allowed_ip`
+- Both additive, both default `true` — no existing route was changed to `false`/unrestricted by either migration
+- The two flags are fully independent per route:
+  - `requiresApiKey=true, requiresAllowedIp=true` → both a valid X-API-Key and an authorized source (IP/CIDR/HOSTNAME) are required
+  - `requiresApiKey=true, requiresAllowedIp=false` → X-API-Key required, any source IP accepted
+  - `requiresApiKey=false, requiresAllowedIp=true` → no X-API-Key required, source must still match an Allowed IP entry
+  - `requiresApiKey=false, requiresAllowedIp=false` → neither check applies
+- Every other validation always runs regardless of either flag: Gateway Route resolution and `active` status, Client `active` status, Route Headers, TLS / trusted CA validation, timeout / retry / upstream forwarding, Request Logs / Audit Logs
+- There is no global switch for either flag — both are exclusively per Gateway Route (never per client)
 
 ### Gateway Proxy decision order (`GatewayProxyService.resolveAndForward`)
 
@@ -103,7 +101,9 @@
 4. Read `route.requiresApiKey`:
    - `true` → X-API-Key is mandatory; missing → `401 API_KEY_REQUIRED`; invalid/expired/revoked/wrong client → `401 INVALID_API_KEY`
    - `false` → X-API-Key is not required; if the header is absent, continue; **if the header is present anyway, it is still validated** (invalid → `401 INVALID_API_KEY`) — a voluntarily sent key is never silently ignored
-5. Allowed IP (always enforced)
+5. Read `route.requiresAllowedIp`:
+   - `true` → `validateAllowedIp()` runs exactly as before (same `sourceIpMatchesAllowedIp` matcher and `AllowedHostnameResolverService`, not duplicated); no match → `403 IP_NOT_ALLOWED`
+   - `false` → the Allowed IP check (and the `prisma.allowedIp.findMany` query) is skipped entirely — any source IP is accepted at this step
 6. Route Headers (always applied)
 7. Upstream request (always attempted)
 8. Request Log persisted (always)
@@ -112,12 +112,14 @@
 
 - `POST /gateway-routes`: OPERATOR/ADMIN can create; `requiresApiKey: false` is ADMIN-only — non-ADMIN gets `403 { code: 'REQUIRES_API_KEY_ADMIN_ONLY' }`, defaults silently to `true` otherwise
 - `PATCH /gateway-routes/:id`: any *change* to `requiresApiKey` (in either direction) is ADMIN-only — same `403 REQUIRES_API_KEY_ADMIN_ONLY`. Sending the field with its current value, or omitting it entirely, does not require ADMIN and never side-effects the flag
-- Both DTOs (`CreateGatewayRouteDto`, `UpdateGatewayRouteDto`) expose `requiresApiKey?: boolean` via Swagger
+- `requiresAllowedIp` has **no permission gate** — any role that can create/update a route (ADMIN/OPERATOR) can set or change it to any value, no confirmation step. This is a deliberate scope decision (not requested by the task that introduced it) since the matrix behavior it implements never mentioned a role distinction; if a stricter gate is ever wanted, mirror the `requiresApiKey` ADMIN-only pattern
+- Both DTOs (`CreateGatewayRouteDto`, `UpdateGatewayRouteDto`) expose `requiresApiKey?: boolean` and `requiresAllowedIp?: boolean` via Swagger
 
 ### Audit
 
-- The general `CREATE`/`UPDATE` audit entries for a Gateway Route always include `requiresApiKey` in their `newValue`/`previousValue`
+- The general `CREATE`/`UPDATE`/`DELETE` audit entries for a Gateway Route always include both `requiresApiKey` and `requiresAllowedIp` in their `newValue`/`previousValue`
 - Additionally, whenever an `UPDATE` actually changes `requiresApiKey`, a **dedicated** `AuditAction.UPDATE` / `AuditEntity.GATEWAY_ROUTE` entry is recorded with `description` = `"Gateway Route API Key requirement enabled/disabled for route <slug>."`, and `previousValue`/`newValue` containing `gatewayRouteId`, `clientId`, `name`, `slug`, `requiresApiKey`
+- `requiresAllowedIp` does **not** get this same dedicated second audit entry (consistent with it having no permission gate) — its change is only visible in the standard UPDATE audit payload
 
 ### Request Logs — `authenticationMode`
 

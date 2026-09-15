@@ -210,19 +210,20 @@ enum GatewayHttpMethod {
 }
 
 model GatewayRoute {
-  id             String            @id @default(uuid())
-  clientId       String            @map("client_id")
-  name           String
-  slug           String            @unique
-  description    String?
-  destinationUrl String            @map("destination_url")
-  method         GatewayHttpMethod
-  timeoutMs      Int               @default(30000) @map("timeout_ms")
-  retryCount     Int               @default(0) @map("retry_count")
-  active         Boolean           @default(true)
-  requiresApiKey Boolean           @default(true) @map("requires_api_key")
-  createdAt      DateTime          @default(now()) @map("created_at")
-  updatedAt      DateTime          @updatedAt @map("updated_at")
+  id                String            @id @default(uuid())
+  clientId          String            @map("client_id")
+  name              String
+  slug              String            @unique
+  description       String?
+  destinationUrl    String            @map("destination_url")
+  method            GatewayHttpMethod
+  timeoutMs         Int               @default(30000) @map("timeout_ms")
+  retryCount        Int               @default(0) @map("retry_count")
+  active            Boolean           @default(true)
+  requiresApiKey    Boolean           @default(true) @map("requires_api_key")
+  requiresAllowedIp Boolean           @default(true) @map("requires_allowed_ip")
+  createdAt         DateTime          @default(now()) @map("created_at")
+  updatedAt         DateTime          @updatedAt @map("updated_at")
 
   client      Client        @relation(fields: [clientId], references: [id], onDelete: Restrict)
   headers     RouteHeader[]

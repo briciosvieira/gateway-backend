@@ -92,6 +92,41 @@ describe('GatewayRoutesService', () => {
       );
     });
 
+    it('defaults requiresAllowedIp to true when not provided in the dto', async () => {
+      prisma.client.findUnique.mockResolvedValue(activeClientFixture);
+      prisma.gatewayRoute.findUnique.mockResolvedValue(null);
+      prisma.gatewayRoute.create.mockResolvedValue(activeGatewayRouteFixture);
+
+      await service.create(authenticatedAdminFixture, requestContext, createDto);
+
+      expect(prisma.gatewayRoute.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ requiresAllowedIp: true }),
+        }),
+      );
+    });
+
+    it('persists requiresAllowedIp: false without requiring ADMIN (no permission gate on this field)', async () => {
+      prisma.client.findUnique.mockResolvedValue(activeClientFixture);
+      prisma.gatewayRoute.findUnique.mockResolvedValue(null);
+      prisma.gatewayRoute.create.mockResolvedValue({
+        ...activeGatewayRouteFixture,
+        requiresAllowedIp: false,
+      });
+
+      const result = await service.create(authenticatedOperatorFixture, requestContext, {
+        ...createDto,
+        requiresAllowedIp: false,
+      });
+
+      expect(result.requiresAllowedIp).toBe(false);
+      expect(prisma.gatewayRoute.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ requiresAllowedIp: false }),
+        }),
+      );
+    });
+
     it('throws NotFoundException when the client does not exist', async () => {
       prisma.client.findUnique.mockResolvedValue(null);
 
@@ -482,6 +517,46 @@ describe('GatewayRoutesService', () => {
         ),
       ).resolves.toBeDefined();
     });
+
+    it('updates requiresAllowedIp when provided, without requiring ADMIN', async () => {
+      prisma.gatewayRoute.findUnique.mockResolvedValue(activeGatewayRouteFixture);
+      prisma.gatewayRoute.update.mockResolvedValue({
+        ...activeGatewayRouteFixture,
+        requiresAllowedIp: false,
+      });
+
+      const result = await service.update(
+        authenticatedOperatorFixture,
+        requestContext,
+        activeGatewayRouteFixture.id,
+        { requiresAllowedIp: false },
+      );
+
+      expect(result.requiresAllowedIp).toBe(false);
+      expect(prisma.gatewayRoute.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ requiresAllowedIp: false }),
+        }),
+      );
+    });
+
+    it('leaves requiresAllowedIp untouched when omitted from the update dto', async () => {
+      prisma.gatewayRoute.findUnique.mockResolvedValue(activeGatewayRouteFixture);
+      prisma.gatewayRoute.update.mockResolvedValue({
+        ...activeGatewayRouteFixture,
+        name: 'Renamed Route',
+      });
+
+      await service.update(authenticatedAdminFixture, requestContext, activeGatewayRouteFixture.id, {
+        name: 'Renamed Route',
+      });
+
+      expect(prisma.gatewayRoute.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.not.objectContaining({ requiresAllowedIp: expect.anything() }),
+        }),
+      );
+    });
   });
 
   describe('changeStatus', () => {
@@ -601,6 +676,7 @@ describe('GatewayRoutesService', () => {
             method: activeGatewayRouteFixture.method,
             active: activeGatewayRouteFixture.active,
             requiresApiKey: activeGatewayRouteFixture.requiresApiKey,
+            requiresAllowedIp: activeGatewayRouteFixture.requiresAllowedIp,
           },
         }),
       );

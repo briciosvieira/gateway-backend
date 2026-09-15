@@ -12,6 +12,7 @@ export interface TestGatewayRouteFactoryOptions {
   timeoutMs?: number;
   retryCount?: number;
   requiresApiKey?: boolean;
+  requiresAllowedIp?: boolean;
 }
 
 /** Creates a real, persisted GatewayRoute for a client. */
@@ -34,6 +35,7 @@ export async function createTestGatewayRoute(
       timeoutMs: options.timeoutMs ?? 5000,
       retryCount: options.retryCount ?? 0,
       requiresApiKey: options.requiresApiKey ?? true,
+      requiresAllowedIp: options.requiresAllowedIp ?? true,
     },
   });
 }

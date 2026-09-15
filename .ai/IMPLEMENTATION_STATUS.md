@@ -2,6 +2,10 @@
 
 ## Completed
 
+- Added `GatewayRoute.requiresAllowedIp` (default `true`), migration `20260915115758_add_gateway_route_requires_allowed_ip` — independent from `requiresApiKey`, same DTO/service/select/audit pattern
+- `GatewayProxyService.resolveAndForward` now wraps the existing `validateAllowedIp()` call in `if (route.requiresAllowedIp) { ... }` — no new matcher, `sourceIpMatchesAllowedIp` and `AllowedHostnameResolverService` reused as-is
+- No ADMIN-only gate on `requiresAllowedIp` (unlike `requiresApiKey`) — any OPERATOR/ADMIN who can edit the route can toggle it; no dedicated audit event, just the field in the standard CREATE/UPDATE/DELETE audit payloads
+- Frontend (`gateway-hub-lf-frontend`): renamed the route form's "Autenticação da rota" section to "Segurança da rota", added a `requiresAllowedIp` checkbox reusing the same field pattern as `requiresApiKey` (no confirmation dialog, no permission gate); added `AllowedIpRequirementBadge` to the routes table and a matching row to the details drawer, both shown only when `requiresAllowedIp === false`
 - Added `HOSTNAME` support to Allowed IPs (forward-DNS allowed sources), migration `20260813125514_add_allowed_ip_hostname_type`
 - New `AllowedHostnameResolverService` (resolve4/resolve6, public-only filter, 30-minute default TTL via `ALLOWED_HOSTNAME_DNS_TTL_MINUTES`, in-flight dedup, fail-closed, no stale-if-error)
 - `GatewayProxyService.validateAllowedIp` now checks `HOSTNAME` entries against the resolver's cached addresses, alongside the untouched IP/CIDR matching

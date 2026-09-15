@@ -35,6 +35,7 @@ interface GatewayRouteResponseData {
   retryCount: number;
   active: boolean;
   requiresApiKey: boolean;
+  requiresAllowedIp: boolean;
   createdAt: string;
   updatedAt: string;
   client: {
@@ -125,6 +126,7 @@ describe('GatewayRoutes (integration)', () => {
     expect(body.data.clientId).toBe(client.id);
     expect(body.data.active).toBe(true);
     expect(body.data.requiresApiKey).toBe(true);
+    expect(body.data.requiresAllowedIp).toBe(true);
   });
 
   it('rejects a slug containing whitespace', async () => {
@@ -444,6 +446,148 @@ describe('GatewayRoutes (integration)', () => {
       const body = response.body as ApiResponse<GatewayRouteResponseData>;
       expect(body.data.name).toBe('Renamed by operator');
       expect(body.data.requiresApiKey).toBe(false);
+    });
+  });
+
+  describe('requiresAllowedIp', () => {
+    const createdGatewayRouteIdsForRequiresAllowedIp: string[] = [];
+    const createdUserIdsForRequiresAllowedIp: string[] = [];
+    let operatorToken: string;
+
+    beforeAll(async () => {
+      const { user: operatorUser } = await createTestUser(db, { roleCode: RoleCode.OPERATOR });
+      createdUserIdsForRequiresAllowedIp.push(operatorUser.id);
+      operatorToken = signTestAccessToken({
+        id: operatorUser.id,
+        username: operatorUser.username,
+        email: operatorUser.email,
+        role: RoleCode.OPERATOR,
+        roleLevel: 50,
+        firstLogin: false,
+      });
+    });
+
+    afterAll(async () => {
+      if (createdGatewayRouteIdsForRequiresAllowedIp.length > 0) {
+        await db.prisma.gatewayRoute.deleteMany({
+          where: { id: { in: createdGatewayRouteIdsForRequiresAllowedIp } },
+        });
+      }
+
+      if (createdUserIdsForRequiresAllowedIp.length > 0) {
+        await db.prisma.user.deleteMany({
+          where: { id: { in: createdUserIdsForRequiresAllowedIp } },
+        });
+      }
+    });
+
+    it('defaults to true when not provided in the create payload', async () => {
+      const response = await authorizedPost(app, '/api/v1/gateway-routes', adminToken, {
+        name: 'Default Allowed IP Route',
+        slug: randomSlug(),
+        destinationUrl: UPSTREAM_URL,
+        method: GatewayHttpMethod.POST,
+        clientId: client.id,
+      });
+
+      expect(response.status).toBe(201);
+
+      const body = response.body as ApiResponse<GatewayRouteResponseData>;
+      createdGatewayRouteIdsForRequiresAllowedIp.push(body.data.id);
+      expect(body.data.requiresAllowedIp).toBe(true);
+    });
+
+    it('allows an OPERATOR to create a gateway route with requiresAllowedIp=false (no permission gate)', async () => {
+      const response = await authorizedPost(app, '/api/v1/gateway-routes', operatorToken, {
+        name: 'Open Origin Route',
+        slug: randomSlug(),
+        destinationUrl: UPSTREAM_URL,
+        method: GatewayHttpMethod.POST,
+        clientId: client.id,
+        requiresAllowedIp: false,
+      });
+
+      expect(response.status).toBe(201);
+
+      const body = response.body as ApiResponse<GatewayRouteResponseData>;
+      createdGatewayRouteIdsForRequiresAllowedIp.push(body.data.id);
+      expect(body.data.requiresAllowedIp).toBe(false);
+    });
+
+    it('allows an OPERATOR to toggle requiresAllowedIp from true to false and back, recording an audit log each time', async () => {
+      const route = await createTestGatewayRoute(db, client.id, { requiresAllowedIp: true });
+      createdGatewayRouteIdsForRequiresAllowedIp.push(route.id);
+
+      const disableResponse = await authorizedPatch(
+        app,
+        `/api/v1/gateway-routes/${route.id}`,
+        operatorToken,
+        { requiresAllowedIp: false },
+      );
+
+      expect(disableResponse.status).toBe(200);
+      const disableBody = disableResponse.body as ApiResponse<GatewayRouteResponseData>;
+      expect(disableBody.data.requiresAllowedIp).toBe(false);
+
+      const disableAudit = await db.prisma.auditLog.findFirst({
+        where: { entityId: route.id, action: AuditAction.UPDATE },
+        orderBy: { createdAt: 'desc' },
+      });
+      expect(disableAudit).not.toBeNull();
+      expect(disableAudit?.newValue).toMatchObject({ requiresAllowedIp: false });
+
+      const enableResponse = await authorizedPatch(
+        app,
+        `/api/v1/gateway-routes/${route.id}`,
+        operatorToken,
+        { requiresAllowedIp: true },
+      );
+
+      expect(enableResponse.status).toBe(200);
+      const enableBody = enableResponse.body as ApiResponse<GatewayRouteResponseData>;
+      expect(enableBody.data.requiresAllowedIp).toBe(true);
+    });
+
+    it('leaves requiresAllowedIp untouched after updating an unrelated field', async () => {
+      const route = await createTestGatewayRoute(db, client.id, { requiresAllowedIp: false });
+      createdGatewayRouteIdsForRequiresAllowedIp.push(route.id);
+
+      const response = await authorizedPatch(
+        app,
+        `/api/v1/gateway-routes/${route.id}`,
+        adminToken,
+        { name: 'Renamed without touching requiresAllowedIp' },
+      );
+
+      expect(response.status).toBe(200);
+
+      const body = response.body as ApiResponse<GatewayRouteResponseData>;
+      expect(body.data.name).toBe('Renamed without touching requiresAllowedIp');
+      expect(body.data.requiresAllowedIp).toBe(false);
+    });
+
+    it('persists requiresAllowedIp across a read after creation (reload regression)', async () => {
+      const createResponse = await authorizedPost(app, '/api/v1/gateway-routes', adminToken, {
+        name: 'Reload Check Route',
+        slug: randomSlug(),
+        destinationUrl: UPSTREAM_URL,
+        method: GatewayHttpMethod.POST,
+        clientId: client.id,
+        requiresAllowedIp: false,
+      });
+
+      const createdId = (createResponse.body as ApiResponse<GatewayRouteResponseData>).data.id;
+      createdGatewayRouteIdsForRequiresAllowedIp.push(createdId);
+
+      const readResponse = await authorizedGet(
+        app,
+        `/api/v1/gateway-routes/${createdId}`,
+        adminToken,
+      );
+
+      expect(readResponse.status).toBe(200);
+      const body = readResponse.body as ApiResponse<GatewayRouteResponseData>;
+      expect(body.data.requiresAllowedIp).toBe(false);
     });
   });
 

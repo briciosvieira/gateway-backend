@@ -15,6 +15,7 @@ export function buildGatewayRouteFixture(overrides: Partial<GatewayRoute> = {}):
     retryCount: 0,
     active: true,
     requiresApiKey: true,
+    requiresAllowedIp: true,
     createdAt: new Date('2026-01-01T00:00:00.000Z'),
     updatedAt: new Date('2026-01-01T00:00:00.000Z'),
     ...overrides,
@@ -33,4 +34,10 @@ export const noApiKeyGatewayRouteFixture: GatewayRoute = buildGatewayRouteFixtur
   id: 'gateway-route-no-api-key-fixture-id',
   slug: '/fixture-route-no-api-key',
   requiresApiKey: false,
+});
+
+export const noAllowedIpGatewayRouteFixture: GatewayRoute = buildGatewayRouteFixture({
+  id: 'gateway-route-no-allowed-ip-fixture-id',
+  slug: '/fixture-route-no-allowed-ip',
+  requiresAllowedIp: false,
 });

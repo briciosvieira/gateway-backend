@@ -9,6 +9,7 @@ export interface ResolvedGatewayRoute {
   retryCount: number;
   active: boolean;
   requiresApiKey: boolean;
+  requiresAllowedIp: boolean;
   clientId: string;
 }
 

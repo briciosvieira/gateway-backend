@@ -99,6 +99,7 @@ const gatewayRouteSelect = {
   retryCount: true,
   active: true,
   requiresApiKey: true,
+  requiresAllowedIp: true,
   clientId: true,
 } as const;
 
@@ -234,10 +235,12 @@ export class GatewayProxyService {
       }
     }
 
-    const isIpAllowed = await this.validateAllowedIp(sourceIp, route.clientId);
+    if (route.requiresAllowedIp) {
+      const isIpAllowed = await this.validateAllowedIp(sourceIp, route.clientId);
 
-    if (!isIpAllowed) {
-      return this.sendGatewayError('IP_NOT_ALLOWED', 403, 'The source IP is not authorized.');
+      if (!isIpAllowed) {
+        return this.sendGatewayError('IP_NOT_ALLOWED', 403, 'The source IP is not authorized.');
+      }
     }
 
     let routeHeaders: ResolvedRouteHeader[];

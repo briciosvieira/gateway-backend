@@ -41,6 +41,7 @@ const gatewayRouteSelect = {
   retryCount: true,
   active: true,
   requiresApiKey: true,
+  requiresAllowedIp: true,
   createdAt: true,
   updatedAt: true,
   client: {
@@ -126,6 +127,7 @@ export class GatewayRoutesService {
         retryCount: dto.retryCount ?? 0,
         active: true,
         requiresApiKey,
+        requiresAllowedIp: dto.requiresAllowedIp ?? true,
       },
       select: gatewayRouteSelect,
     });
@@ -145,6 +147,7 @@ export class GatewayRoutesService {
         retryCount: route.retryCount,
         active: route.active,
         requiresApiKey: route.requiresApiKey,
+        requiresAllowedIp: route.requiresAllowedIp,
       },
       sourceIp: requestContext.sourceIp,
       requestId: requestContext.requestId,
@@ -351,6 +354,9 @@ export class GatewayRoutesService {
         ...(dto.timeoutMs !== undefined ? { timeoutMs: dto.timeoutMs } : {}),
         ...(dto.retryCount !== undefined ? { retryCount: dto.retryCount } : {}),
         ...(dto.requiresApiKey !== undefined ? { requiresApiKey: dto.requiresApiKey } : {}),
+        ...(dto.requiresAllowedIp !== undefined
+          ? { requiresAllowedIp: dto.requiresAllowedIp }
+          : {}),
       },
       select: gatewayRouteSelect,
     });
@@ -369,6 +375,7 @@ export class GatewayRoutesService {
         timeoutMs: currentRoute.timeoutMs,
         retryCount: currentRoute.retryCount,
         requiresApiKey: currentRoute.requiresApiKey,
+        requiresAllowedIp: currentRoute.requiresAllowedIp,
       },
       newValue: {
         name: updatedRoute.name,
@@ -379,6 +386,7 @@ export class GatewayRoutesService {
         timeoutMs: updatedRoute.timeoutMs,
         retryCount: updatedRoute.retryCount,
         requiresApiKey: updatedRoute.requiresApiKey,
+        requiresAllowedIp: updatedRoute.requiresAllowedIp,
       },
       sourceIp: requestContext.sourceIp,
       requestId: requestContext.requestId,
@@ -494,6 +502,7 @@ export class GatewayRoutesService {
         method: route.method,
         active: route.active,
         requiresApiKey: route.requiresApiKey,
+        requiresAllowedIp: route.requiresAllowedIp,
       },
       sourceIp: requestContext.sourceIp,
       requestId: requestContext.requestId,
